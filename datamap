@@ -1,0 +1,39 @@
+třída: Předmět
+atributy:
+zkratka
+název
+vyučující
+počet přednášek
+počet seminářů
+počet cvičení
+počet týdnů
+jazyk cz/en
+obor studia 
+velikost skupiny
+způsob ukončení
+
+třída: Skupina
+atributy:
+zkratka
+název
+prezenční/kombinovaná
+ročník
+semestr
+počet studentů
+
+třída: Zamšstnanec
+atributy:
+jméno
+příjmení
+mobilní telefon
+telefon do práce
+email do práce
+osobní email
+kancelář
+je/není doktorant
+typ úvazku (0 0.8 1)
+kolik pracovních bodů mu zabírá výuka ??
+
+třída: Pracovní štítky
+atributy:
+je potřeba ještě zvážit - pravděpodobně to bude pouze mezivazební tabulka
