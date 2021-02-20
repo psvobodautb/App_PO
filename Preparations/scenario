@@ -1,7 +1,7 @@
 Aplikaci vytvořím ve frameworku Qt v jazyce C++, protože s ním mám zkušenostia  skvěle odpovídá požadavkům na aplikaci.
 S napojením na databázi není problém, Qt umožňuje i práci s XML soubory.
 
-Aplikace s ebude skládat ze 4 oken.
+Aplikace se bude skládat ze 4 oken.
 1. přidává předměty
 2. přidáva zaměstnance
 3. přidává skupiny
