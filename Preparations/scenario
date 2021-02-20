@@ -1,4 +1,11 @@
 Aplikaci vytvořím ve frameworku Qt v jazyce C++, protože s ním mám zkušenostia  skvěle odpovídá požadavkům na aplikaci.
 S napojením na databázi není problém, Qt umožňuje i práci s XML soubory.
 
-Otázky zatím nemám.
+Aplikace s ebude skládat ze 4 oken.
+1. přidává předměty
+2. přidáva zaměstnance
+3. přidává skupiny
+4. generuje a přiřazuje štítky
+
+Nejprve vytvořím fronted, aby se mi lépe pracovalo s daty - a mohl jsem si je prezentovat přímo v appce.
+Navíc jsem se ještě nerozmyslel, jestli využiju databázi nebo soubory.
