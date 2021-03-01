@@ -1,38 +1,38 @@
 třída: Předmět
 atributy:
-zkratka
-název
-vyučující
-počet přednášek
-počet seminářů
-počet cvičení
-počet týdnů
-jazyk cz/en
-obor studia 
-velikost skupiny
-způsob ukončení
+string zkratka
+string název
+int vyučující
+int počet přednášek
+int počet seminářů
+int počet cvičení
+int počet týdnů
+bool jazyk cz/en
+string obor studia 
+int velikost skupiny
+int způsob ukončení
 
 třída: Skupina
 atributy:
-zkratka
-název
-prezenční/kombinovaná
-ročník
-semestr
-počet studentů
+string zkratka
+string název
+bool prezenční/kombinovaná
+int ročník
+int semestr
+int počet studentů
 
 třída: Zamšstnanec
 atributy:
-jméno
-příjmení
-mobilní telefon
-telefon do práce
-email do práce
-osobní email
-kancelář
-je/není doktorant
-typ úvazku (0 0.8 1)
-kolik pracovních bodů mu zabírá výuka ??
+string jméno
+string příjmení
+string mobilní telefon
+string telefon do práce
+string email do práce
+string osobní email
+string kancelář
+bool je/není doktorant
+double typ úvazku (0 0.8 1)
+int kolik pracovních bodů mu zabírá výuka ??
 
 třída: Pracovní štítky
 je potřeba ještě zvážit - pravděpodobně to bude pouze mezivazební tabulka
