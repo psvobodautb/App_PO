@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>stylesheet.qrc</file>
+        <file>stylesheet.qss</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>images/down_arrow.png</file>
+        <file>images/handle.png</file>
+        <file>images/checkbox.png</file>
+    </qresource>
+</RCC>
