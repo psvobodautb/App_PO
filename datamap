@@ -8,7 +8,9 @@ int počet seminářů
 int počet cvičení
 int počet týdnů
 bool jazyk cz/en
-string obor studia 
+int forma studia 
+int ročník
+int semestr
 int velikost skupiny
 int způsob ukončení
 
