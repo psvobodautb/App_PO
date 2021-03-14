@@ -17,7 +17,7 @@ class GroupsWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit GroupsWidget(QWidget *parent = nullptr);
+    explicit GroupsWidget(QWidget* parent = nullptr);
     ~GroupsWidget();
 
 private:

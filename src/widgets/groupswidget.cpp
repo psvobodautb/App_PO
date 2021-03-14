@@ -5,7 +5,7 @@
 
 #include "include/Enums.h"
 
-GroupsWidget::GroupsWidget(QWidget *parent) :
+GroupsWidget::GroupsWidget(QWidget* parent) :
     QWidget(parent)
 {
     widgetLayout = new QVBoxLayout();
@@ -35,15 +35,15 @@ GroupsWidget::~GroupsWidget()
 
 void GroupsWidget::SetupAddingLayout()
 {
-    addingLayout->addWidget(new QLabel("Nový:"));
+    addingLayout->addWidget(new QLabel("NovÃ½:"));
 
     QHBoxLayout* lrow = new QHBoxLayout();
     lrow->addWidget(new QLabel("Zkratka"), Qt::AlignCenter);
-    lrow->addWidget(new QLabel("Název"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("NÃ¡zev"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Typ"), Qt::AlignCenter);
-    lrow->addWidget(new QLabel("Roèník"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("RoÄnÃ­k"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Semestr"), Qt::AlignCenter);
-    lrow->addWidget(new QLabel("Poèet studentù"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("PoÄet studentÅ¯"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Studium"), Qt::AlignCenter);
     lrow->addWidget(new QLabel(""), Qt::AlignCenter);
 
@@ -57,8 +57,8 @@ void GroupsWidget::SetupAddingLayout()
     lrow->addWidget(name, Qt::AlignLeft | Qt::AlignTop);
 
     studyType = new QComboBox;
-    studyType->addItem("Prezenèní", StudyType::Fulltime);
-    studyType->addItem("Kombinovaná", StudyType::Combined);
+    studyType->addItem("PrezenÄnÃ­", StudyType::Fulltime);
+    studyType->addItem("KombinovanÃ¡", StudyType::Combined);
     lrow->addWidget(studyType, Qt::AlignLeft | Qt::AlignTop);
 
     studyYear = new QComboBox;
@@ -70,8 +70,8 @@ void GroupsWidget::SetupAddingLayout()
     lrow->addWidget(studyYear, Qt::AlignLeft | Qt::AlignTop);
 
     semester = new QComboBox;
-    semester->addItem("Letní", Semester::Summer);
-    semester->addItem("Zimní", Semester::Winter);
+    semester->addItem("LetnÃ­", Semester::Summer);
+    semester->addItem("ZimnÃ­", Semester::Winter);
     lrow->addWidget(semester, Qt::AlignLeft | Qt::AlignTop);
 
     studentsNum = new QSpinBox;
@@ -80,18 +80,18 @@ void GroupsWidget::SetupAddingLayout()
     lrow->addWidget(studentsNum, Qt::AlignLeft | Qt::AlignTop);
 
     studyForm = new QComboBox;
-    studyForm->addItem("Bakaláøský", StudyForm::Bachelor);
-    studyForm->addItem("Magisterský", StudyForm::Master);
-    studyForm->addItem("Doktorský", StudyForm::Doctoral);
+    studyForm->addItem("BakalÃ¡Å™skÃ½", StudyForm::Bachelor);
+    studyForm->addItem("MagisterskÃ½", StudyForm::Master);
+    studyForm->addItem("DoktorskÃ½", StudyForm::Doctoral);
     lrow->addWidget(studyForm, Qt::AlignLeft | Qt::AlignTop);
 
-    btnAdd = new QPushButton("Pøidat");
+    btnAdd = new QPushButton("PÅ™idat");
     lrow->addWidget(btnAdd, Qt::AlignLeft | Qt::AlignTop);
     connect(btnAdd, &QPushButton::released, this, &GroupsWidget::AddGroup);
 
     addingLayout->addLayout(lrow);
 
-    addingLayout->addWidget(new QLabel("Všechny skupiny:"));
+    addingLayout->addWidget(new QLabel("VÅ¡echny skupiny:"));
 }
 
 void GroupsWidget::SetupGroups()
@@ -109,9 +109,9 @@ void GroupsWidget::SetupGroups()
         lrow->addWidget(new QLabel(groups.at(i).name));
 
         if (groups.at(i).isCombined)
-            lrow->addWidget(new QLabel("Kombinovaná"));
+            lrow->addWidget(new QLabel("KombinovanÃ¡"));
         else
-            lrow->addWidget(new QLabel("Prezenèní"));
+            lrow->addWidget(new QLabel("PrezenÄnÃ­"));
 
         QString yearStr = "";
         switch (groups.at(i).year) {
@@ -137,22 +137,22 @@ void GroupsWidget::SetupGroups()
         lrow->addWidget(new QLabel(yearStr));
 
         if (groups.at(i).semester == Semester::Summer)
-            lrow->addWidget(new QLabel("Letní"));
+            lrow->addWidget(new QLabel("LetnÃ­"));
         else
-            lrow->addWidget(new QLabel("Zimní"));
+            lrow->addWidget(new QLabel("ZimnÃ­"));
 
         lrow->addWidget(new QLabel(QString::number(groups.at(i).studentsNum)));
 
         QString formStr = "";
         switch (groups.at(i).studyForm) {
         case StudyForm::Bachelor:
-            formStr = "Bakaláøský";
+            formStr = "BakalÃ¡Å™skÃ½";
             break;
         case StudyForm::Master:
-            formStr = "Magisterský";
+            formStr = "MagisterskÃ½";
             break;
         case StudyForm::Doctoral:
-            formStr = "Doktorský";
+            formStr = "DoktorskÃ½";
             break;
         default:
             break;
@@ -206,11 +206,12 @@ void GroupsWidget::AddGroup()
 {
     bool canAdd = ValidateGroup();
 
-    if(!canAdd)
-        QMessageBox::warning(this, "Neplatná skupina",
-            "Nevyplnil jste všechny údaje ke skupinì!\nZkontrolujte název a zkratku!", QMessageBox::Close);
+    if (!canAdd)
+        QMessageBox::warning(this, "NeplatnÃ¡ skupina",
+            "Nevyplnil jste vÅ¡echny Ãºdaje ke skupinÄ›!\nZkontrolujte nÃ¡zev a zkratku!", QMessageBox::Close);
     else {
         GroupModel m;
+        m.id = QUuid::createUuid();
         m.shortcut = shortcut->text();
         m.name = name->text();
         m.isCombined = ValidateStudyType(studyType->currentIndex());

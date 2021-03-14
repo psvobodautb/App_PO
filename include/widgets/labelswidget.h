@@ -5,11 +5,11 @@
 
 class LabelsWidget : public QWidget
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    explicit LabelsWidget(QWidget *parent = nullptr);
-    ~LabelsWidget();
+	explicit LabelsWidget(QWidget* parent = nullptr);
+	~LabelsWidget();
 
 private:
 };

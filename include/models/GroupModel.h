@@ -13,6 +13,7 @@ public:
 	void assign(const GroupModel);
 	void operator=(const GroupModel);
 
+	QUuid id;
 	QString shortcut;
 	QString name;
 	bool isCombined;
