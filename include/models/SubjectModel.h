@@ -24,5 +24,6 @@ public:
     bool isWinterSemester;
     int ending;
     int groupSize;
+    int credits;
 };
 

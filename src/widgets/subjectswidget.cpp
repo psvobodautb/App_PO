@@ -4,110 +4,101 @@
 #include <QSpacerItem>
 #include <QMessageBox>
 #include <QUuid>
+#include <QHBoxLayout>
 
-enum Language {
-    Czech,
-    English
-};
-
-enum StudyType {
-    Fulltime,
-    Combined
-};
-
-enum StudyYear {
-    First,
-    Second,
-    Third,
-    Fourth,
-    Fifth
-};
-
-enum Semester {
-    Summer,
-    Winter
-};
-
-enum Ending {
-    Credit,
-    ClassifiedCredit,
-    Exam
-};
-
-// předělat na jeden gridlayout
+#include "include/Enums.h"
 
 SubjectsWidget::SubjectsWidget(QWidget *parent) :
     QWidget(parent)
 {
-    newLayout = new QGridLayout();
-    subjectsLayout = new QGridLayout();
-    widgetLayout = new QVBoxLayout(this);
+    addingLayout = new QVBoxLayout();
+    widgetLayout = new QVBoxLayout();
+    subjectsLayout = NULL;
 
-    widgetLayout->addLayout(newLayout);
-    widgetLayout->addLayout(subjectsLayout);
-    spacerItem = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
-    widgetLayout->addItem(spacerItem);
+    innerWidget = new QWidget();
+    scrollArea = new QScrollArea();
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setWidget(innerWidget);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
-    SetupNewLayout();
-    SetupSubjectsLayout();
+    setLayout(widgetLayout);
+
+    widgetLayout->addLayout(addingLayout);
+    widgetLayout->addWidget(scrollArea);
+
+    SetupAddingLayout();
 }
 
 SubjectsWidget::~SubjectsWidget()
 {
-    delete widgetLayout;
+    delete subjectsLayout;
 }
 
-void SubjectsWidget::SetupWidget()
+void SubjectsWidget::SetupSubjectsLayout()
 {
+    ClearSubjectsLayout();
+    SetupSubjects();
 }
 
-void SubjectsWidget::SetupNewLayout()
+void SubjectsWidget::SetupAddingLayout()
 {
-    newLayout->addWidget(new QLabel("Nový:"), 0, 0);
+    addingLayout->addWidget(new QLabel(("Nový:")));
+
+    QHBoxLayout* lrow = new QHBoxLayout();
+    lrow->addWidget(new QLabel(QString::fromUtf8("Zkratka")), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Název"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Přednášky"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Semináře"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Cvičení"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Týdny"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Jazyk"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Studium"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Ročník"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Semestr"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Ukončení"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Velikost skupiny"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Počet kreditů"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel(""), Qt::AlignCenter);
+
+    addingLayout->addLayout(lrow);
+    lrow = new QHBoxLayout();
 
     shortcut = new QLineEdit;
-    newLayout->addWidget(new QLabel("Zkratka"), 1, 0, Qt::AlignCenter);
-    newLayout->addWidget(shortcut, 2, 0);
+    lrow->addWidget(shortcut, Qt::AlignLeft | Qt::AlignTop);
 
     name = new QLineEdit;
-    newLayout->addWidget(new QLabel("Název"), 1, 1, Qt::AlignCenter);
-    newLayout->addWidget(name, 2, 1);
+    lrow->addWidget(name, Qt::AlignLeft | Qt::AlignTop);
 
     lecturesNum = new QSpinBox;
     lecturesNum->setMinimum(0);
     lecturesNum->setMaximum(50);
-    newLayout->addWidget(new QLabel("Přednášky"), 1, 2, Qt::AlignCenter);
-    newLayout->addWidget(lecturesNum, 2, 2);
+    lrow->addWidget(lecturesNum, Qt::AlignLeft | Qt::AlignTop);
 
     seminarsNum = new QSpinBox;
     seminarsNum->setMinimum(0);
     seminarsNum->setMaximum(50);
-    newLayout->addWidget(new QLabel("Semináře"), 1, 3, Qt::AlignCenter);
-    newLayout->addWidget(seminarsNum, 2, 3);
+    lrow->addWidget(seminarsNum, Qt::AlignLeft | Qt::AlignTop);
 
     excercisesNum = new QSpinBox;
     excercisesNum->setMinimum(0);
     excercisesNum->setMaximum(50);
-    newLayout->addWidget(new QLabel("Cvičení"), 1, 4, Qt::AlignCenter);
-    newLayout->addWidget(excercisesNum, 2, 4);
+    lrow->addWidget(excercisesNum, Qt::AlignLeft | Qt::AlignTop);
 
     weeksNum = new QSpinBox;
     weeksNum->setMinimum(1);
     weeksNum->setMaximum(20);
-    newLayout->addWidget(new QLabel("Týdny"), 1, 5, Qt::AlignCenter);
-    newLayout->addWidget(weeksNum, 2, 5);
+    lrow->addWidget(weeksNum, Qt::AlignLeft | Qt::AlignTop);
 
     language = new QComboBox;
     language->addItem("Čeština", Language::Czech);
     language->addItem("Angličtina", Language::English);
-    newLayout->addWidget(new QLabel("Jazyk"), 1, 6, Qt::AlignCenter);
-    newLayout->addWidget(language, 2, 6);
+    lrow->addWidget(language, Qt::AlignLeft | Qt::AlignTop);
 
     studyType = new QComboBox;
     studyType->addItem("Prezenční", StudyType::Fulltime);
     studyType->addItem("Kombinovaná", StudyType::Combined);
-    newLayout->addWidget(new QLabel("Studium"), 1, 7, Qt::AlignCenter);
-    newLayout->addWidget(studyType, 2, 7);
+    lrow->addWidget(studyType, Qt::AlignLeft | Qt::AlignTop);
 
     studyYear = new QComboBox;
     studyYear->addItem("1.", StudyYear::First);
@@ -115,54 +106,65 @@ void SubjectsWidget::SetupNewLayout()
     studyYear->addItem("3.", StudyYear::Third);
     studyYear->addItem("4.", StudyYear::Fourth);
     studyYear->addItem("5.", StudyYear::Fifth);
-    newLayout->addWidget(new QLabel("Ročník"), 1, 8, Qt::AlignCenter);
-    newLayout->addWidget(studyYear, 2, 8);
+    lrow->addWidget(studyYear, Qt::AlignLeft | Qt::AlignTop);
 
     semester = new QComboBox;
     semester->addItem("Letní", Semester::Summer);
     semester->addItem("Zimní", Semester::Winter);
-    newLayout->addWidget(new QLabel("Semestr"), 1, 9, Qt::AlignCenter);
-    newLayout->addWidget(semester, 2, 9);
+    lrow->addWidget(semester, Qt::AlignLeft | Qt::AlignTop);
 
     ending = new QComboBox;
     ending->addItem("Zápočet", Ending::Credit);
     ending->addItem("Klasifikovaný zápočet", Ending::ClassifiedCredit);
     ending->addItem("Zkouška", Ending::Exam);
-    newLayout->addWidget(new QLabel("Ukončení"), 1, 10, Qt::AlignCenter);
-    newLayout->addWidget(ending, 2, 10);
+    lrow->addWidget(ending, Qt::AlignLeft | Qt::AlignTop);
 
-    newLayout->addWidget(new QLabel("Velikost skupiny"), 1, 11, Qt::AlignCenter);
     groupSize = new QSpinBox;
     groupSize->setMinimum(1);
     groupSize->setMaximum(1000);
-    newLayout->addWidget(groupSize, 2, 11);
+    lrow->addWidget(groupSize, Qt::AlignLeft | Qt::AlignTop);
+
+    creditsNum = new QSpinBox;
+    creditsNum->setMinimum(1);
+    creditsNum->setMaximum(30);
+    lrow->addWidget(creditsNum, Qt::AlignLeft | Qt::AlignTop);
 
     btnAdd = new QPushButton("Přidat");
-    newLayout->addWidget(btnAdd, 2, 12);
+    lrow->addWidget(btnAdd, Qt::AlignLeft | Qt::AlignTop);
     connect(btnAdd, &QPushButton::released, this, &SubjectsWidget::AddSubject);
+
+    addingLayout->addLayout(lrow);
+
+    addingLayout->addWidget(new QLabel("Všechny předměty:"));
 }
 
-void SubjectsWidget::SetupSubjectsLayout()
+void SubjectsWidget::SetupSubjects()
 {
-    ClearSubjectsLayout();
+    innerWidget = new QWidget();
+    innerWidget->setMinimumSize(450,380);
+    scrollArea->setWidget(innerWidget);
+
+    subjectsLayout = new QVBoxLayout();
 
     for (int i = 0; i < subjects.count(); i++) {
-        subjectsLayout->addWidget(new QLabel(subjects.at(i).shortcut), i, 0);
-        subjectsLayout->addWidget(new QLabel(subjects.at(i).name), i, 1);
-        subjectsLayout->addWidget(new QLabel(QString::number(subjects.at(i).lecturesNum)), i, 2);
-        subjectsLayout->addWidget(new QLabel(QString::number(subjects.at(i).seminarsNum)), i, 3);
-        subjectsLayout->addWidget(new QLabel(QString::number(subjects.at(i).excercisesNum)), i, 4);
-        subjectsLayout->addWidget(new QLabel(QString::number(subjects.at(i).weeksNum)), i, 5);
+        QHBoxLayout* lrow = new QHBoxLayout();
+
+        lrow->addWidget(new QLabel(subjects.at(i).shortcut));
+        lrow->addWidget(new QLabel(subjects.at(i).name));
+        lrow->addWidget(new QLabel(QString::number(subjects.at(i).lecturesNum)));
+        lrow->addWidget(new QLabel(QString::number(subjects.at(i).seminarsNum)));
+        lrow->addWidget(new QLabel(QString::number(subjects.at(i).excercisesNum)));
+        lrow->addWidget(new QLabel(QString::number(subjects.at(i).weeksNum)));
 
         if(subjects.at(i).isEnglish)
-            subjectsLayout->addWidget(new QLabel("Angličtina"), i, 6);
+            lrow->addWidget(new QLabel("Angličtina"));
         else
-            subjectsLayout->addWidget(new QLabel("Čeština"), i, 6);
+            lrow->addWidget(new QLabel("Čeština"));
 
         if(subjects.at(i).isCombined)
-            subjectsLayout->addWidget(new QLabel("Kombinovaná"), i, 7);
+            lrow->addWidget(new QLabel("Kombinovaná"));
         else
-            subjectsLayout->addWidget(new QLabel("Prezenční"), i, 7);
+            lrow->addWidget(new QLabel("Prezenční"));
 
         QString studyYearStr = "";
         switch (subjects.at(i).studyYear) {
@@ -184,12 +186,12 @@ void SubjectsWidget::SetupSubjectsLayout()
         default:
             break;
         }
-        subjectsLayout->addWidget(new QLabel(studyYearStr), i, 8);
+        lrow->addWidget(new QLabel(studyYearStr));
 
         if(subjects.at(i).isWinterSemester)
-            subjectsLayout->addWidget(new QLabel("Zimní"), i, 9);
+            lrow->addWidget(new QLabel("Zimní"));
         else
-            subjectsLayout->addWidget(new QLabel("Letní"), i, 9);
+            lrow->addWidget(new QLabel("Letní"));
 
         QString endingStr = "";
         switch (subjects.at(i).ending) {
@@ -205,19 +207,25 @@ void SubjectsWidget::SetupSubjectsLayout()
         default:
             break;
         }
-        subjectsLayout->addWidget(new QLabel(endingStr), i, 10);
+        lrow->addWidget(new QLabel(endingStr));
 
-        subjectsLayout->addWidget(new QLabel(QString::number(subjects.at(i).groupSize)), i, 11);
+        lrow->addWidget(new QLabel(QString::number(subjects.at(i).groupSize)));
+
+        lrow->addWidget(new QLabel(QString::number(subjects.at(i).credits)));
 
         QPushButton* deleteBtn = new QPushButton("Smazat");
         deleteBtn->setProperty("row", i);
         
-        subjectsLayout->addWidget(deleteBtn, i, 12);
+        lrow->addWidget(deleteBtn);
         connect(deleteBtn, &QPushButton::released, this, &SubjectsWidget::DeleteSubject);
+
+        subjectsLayout->addLayout(lrow);
     }
 
-    spacerItem = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
-    widgetLayout->addItem(spacerItem);
+    QSpacerItem* spacerItem = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    subjectsLayout->addItem(spacerItem);
+
+    innerWidget->setLayout(subjectsLayout);
 }
 
 void SubjectsWidget::ClearSubjectsLayout()
@@ -225,12 +233,19 @@ void SubjectsWidget::ClearSubjectsLayout()
     if (subjectsLayout != NULL) {
         QLayoutItem* item;
         while ((item = subjectsLayout->takeAt(0)) != NULL) {
-            delete item->widget();
-            delete item;
+            if (item->spacerItem())
+                delete item->spacerItem();
+            else if (item->widget()) {
+                delete item->widget();
+                delete item;
+            }
+            else if (item->layout()) {
+                delete item->layout();
+            }
         }
 
         delete subjectsLayout;
-        delete spacerItem;
+        delete innerWidget;
     }
 }
 
@@ -239,7 +254,7 @@ void SubjectsWidget::AddSubject()
     bool canAdd = ValidateSubject();
 
     if (!canAdd) 
-        int result = QMessageBox::warning(this,"Neplatný předmět", 
+        QMessageBox::warning(this,"Neplatný předmět", 
             "Nevyplnil jste všechny údaje k předmětu!\nZkontrolujte název, zkratku a počty vyučovacích hodin!", QMessageBox::Close);
     else
     {
@@ -257,6 +272,7 @@ void SubjectsWidget::AddSubject()
         m.isWinterSemester = ValidateSemester(semester->currentIndex());
         m.ending = semester->currentIndex();
         m.groupSize = groupSize->value();
+        m.credits = creditsNum->value();
 
         subjects.append(m);
     }

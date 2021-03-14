@@ -23,6 +23,7 @@ void SubjectModel::assign(const SubjectModel m)
     isWinterSemester = m.isWinterSemester;
     ending = m.ending;
     groupSize = m.groupSize;
+    credits = m.credits;
 }
 
 void SubjectModel::operator=(const SubjectModel m)

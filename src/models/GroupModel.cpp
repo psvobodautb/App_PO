@@ -16,6 +16,7 @@ void GroupModel::assign(const GroupModel m)
 	year = m.year;
 	semester = m.semester;
 	studentsNum = m.studentsNum;
+	studyForm = m.studyForm;
 }
 
 void GroupModel::operator=(const GroupModel m)

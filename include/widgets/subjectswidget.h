@@ -1,5 +1,4 @@
-#ifndef SUBJECTSWIDGET_H
-#define SUBJECTSWIDGET_H
+#pragma once
 
 #include <QWidget>
 #include <QLineEdit>
@@ -8,6 +7,7 @@
 #include <QVBoxLayout>
 #include <QGridLayout>
 #include <QSpinBox>
+#include <QScrollArea>
 
 #include "include/models/SubjectModel.h"
 
@@ -20,9 +20,9 @@ public:
     ~SubjectsWidget();
 
 private:
-    void SetupWidget();
-    void SetupNewLayout();
     void SetupSubjectsLayout();
+    void SetupAddingLayout();
+    void SetupSubjects();
     void ClearSubjectsLayout();
 
     void AddSubject();
@@ -33,11 +33,12 @@ private:
     bool ValidateStudyType(int);
     bool ValidateSemester(int);
 
-    QGridLayout* newLayout;
-    QGridLayout* subjectsLayout;
+    QVBoxLayout* addingLayout;
     QVBoxLayout* widgetLayout;
+    QVBoxLayout* subjectsLayout;
 
-    QSpacerItem* spacerItem;
+    QScrollArea* scrollArea;
+    QWidget* innerWidget;
 
     QLineEdit* shortcut;
     QLineEdit* name;
@@ -52,9 +53,8 @@ private:
     QComboBox* semester;
     QComboBox* ending;
     QSpinBox* groupSize;
+    QSpinBox* creditsNum;
     QPushButton* btnAdd;
 
     QList<SubjectModel> subjects;
 };
-
-#endif // SUBJECTSWIDGET_H

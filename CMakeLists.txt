@@ -17,6 +17,9 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 set(SOURCE_LIST
     src/main.cpp
     src/mainwindow.cpp
+
+    include/enums.h
+
     src/widgets/subjectswidget.cpp
     src/widgets/employeeswidget.cpp
     src/widgets/groupswidget.cpp

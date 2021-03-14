@@ -19,5 +19,7 @@ public:
 	int year;
 	int semester;
 	int studentsNum;
+	int studyForm;
+
 	QList<QUuid> subjects;
 };
