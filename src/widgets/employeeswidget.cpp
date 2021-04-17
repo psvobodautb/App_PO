@@ -2,6 +2,8 @@
 
 #include <QLabel>
 #include <QMessageBox>
+#include <QRegExp>
+#include <QDebug>
 
 EmployeesWidget::EmployeesWidget(QWidget* parent) :
     QWidget(parent)
@@ -161,25 +163,31 @@ void EmployeesWidget::ClearEmployeesLayout()
 
 void EmployeesWidget::AddEmployee()
 {
-    bool canAdd = ValidateEmployee();
-
-    if (!canAdd)
+    if (!ValidateEmail(emailHome->text()) || !ValidateEmail(emailWork->text())) {
         QMessageBox::warning(this, "Neplatný zaměstnanec",
-            "Nevyplnil jste všechny údaje o zaměstnanci!", QMessageBox::Close);
+            "Zadal jste neplatný email!", QMessageBox::Close);
+    } 
     else {
-        EmployeeModel m;
-        m.id = QUuid::createUuid();
-        m.name = name->text();
-        m.surname = surname->text();
-        m.phoneNumHome = phoneNumHome->text();
-        m.phoneNumWork = phoneNumWork->text();
-        m.emailWork = emailWork->text();
-        m.emailHome = emailHome->text();
-        m.office = office->text();
-        m.isDoctoral = ValidateIsDoctoral();
-        m.harnessType = harnessType->value();
+        bool canAdd = ValidateEmployee();
 
-        employees.append(m);
+        if (!canAdd)
+            QMessageBox::warning(this, "Neplatný zaměstnanec",
+                "Nevyplnil jste všechny údaje o zaměstnanci!", QMessageBox::Close);
+        else {
+            EmployeeModel m;
+            m.id = QUuid::createUuid();
+            m.name = name->text();
+            m.surname = surname->text();
+            m.phoneNumHome = phoneNumHome->text();
+            m.phoneNumWork = phoneNumWork->text();
+            m.emailWork = emailWork->text();
+            m.emailHome = emailHome->text();
+            m.office = office->text();
+            m.isDoctoral = ValidateIsDoctoral();
+            m.harnessType = harnessType->value();
+
+            employees.append(m);
+        }
     }
 
     SetupEmployeesLayout();
@@ -199,6 +207,21 @@ bool EmployeesWidget::ValidateEmployee()
 {
     bool isValid = true;
 
+    if (name->text().isEmpty())
+        isValid = false;
+
+    if (surname->text().isEmpty())
+        isValid = false;
+
+    if (office->text().isEmpty())
+        isValid = false;
+
+    /*if (!ValidatePhoneNumber(phoneNumHome->text()))
+        isValid = false;
+
+    if (!ValidatePhoneNumber(phoneNumWork->text()))
+        isValid = false;*/
+
     return isValid;
 }
 
@@ -208,4 +231,22 @@ bool EmployeesWidget::ValidateIsDoctoral()
         return false;
 
     return true;
+}
+
+bool EmployeesWidget::ValidateEmail(QString email)
+{
+    qDebug() << email;
+    QRegExp mailREX("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b");
+    mailREX.setCaseSensitivity(Qt::CaseInsensitive);
+    mailREX.setPatternSyntax(QRegExp::RegExp);
+    return mailREX.exactMatch(email);
+}
+
+bool EmployeesWidget::ValidatePhoneNumber(QString number)
+{
+    qDebug() << number;
+    QRegExp mailREX("^+[1-9]{1}[0-9]{3,14}$");
+    mailREX.setCaseSensitivity(Qt::CaseInsensitive);
+    mailREX.setPatternSyntax(QRegExp::RegExp);
+    return mailREX.exactMatch(number);
 }

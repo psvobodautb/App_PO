@@ -31,6 +31,8 @@ private:
     bool ValidateEmployee();
 
     bool ValidateIsDoctoral();
+    bool ValidateEmail(QString email);
+    bool ValidatePhoneNumber(QString number);
 
     QVBoxLayout* widgetLayout;
     QVBoxLayout* addingLayout;
