@@ -11,8 +11,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED Sql)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED Sql)
 
 set(SOURCE_LIST
     src/main.cpp
@@ -55,4 +55,4 @@ endif()
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCE_LIST})
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-target_link_libraries(poApp PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(poApp PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Sql)

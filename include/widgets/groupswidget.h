@@ -9,6 +9,7 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include <QPushButton>
+#include <QSqlQuery>
 
 #include "include/models/GroupModel.h"
 
@@ -19,6 +20,16 @@ class GroupsWidget : public QWidget
 public:
     explicit GroupsWidget(QWidget* parent = nullptr);
     ~GroupsWidget();
+
+    QList<GroupModel>* GetGroups(){ return &groups; }
+    void LoadDb(QSqlQuery* query);
+
+    // DB
+private:
+    void LoadGroupsFromDb();
+    void InsertGroupToDb(GroupModel model);
+    void DeleteGroupFromDb(QUuid id);
+    QString ConvertUuidToString(QUuid id);
 
 private:
     void SetupAddingLayout();
@@ -31,6 +42,9 @@ private:
     bool ValidateGroup();
 
     int ValidateStudyType(int);
+    bool ValidateSemester(int);
+
+    void ValueChanged(int);
 
     QVBoxLayout* widgetLayout;
     QVBoxLayout* addingLayout;
@@ -49,4 +63,6 @@ private:
     QPushButton* btnAdd;
 
     QList<GroupModel> groups;
+
+    QSqlQuery* _query;
 };

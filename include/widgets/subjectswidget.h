@@ -8,6 +8,7 @@
 #include <QGridLayout>
 #include <QSpinBox>
 #include <QScrollArea>
+#include <QSqlQuery>
 
 #include "include/models/SubjectModel.h"
 
@@ -18,6 +19,17 @@ class SubjectsWidget : public QWidget
 public:
     explicit SubjectsWidget(QWidget *parent = nullptr);
     ~SubjectsWidget();
+
+    QList<SubjectModel>* GetSubjects(){ return &subjects; }
+
+    void LoadDb(QSqlQuery* query);
+
+    // DB
+private:
+    void LoadSubjectsFromDb();
+    void InsertSubjectToDb(SubjectModel model);
+    void DeleteSubjectFromDb(QUuid id);
+    QString ConvertUuidToString(QUuid id);
 
 private:
     void SetupSubjectsLayout();
@@ -32,6 +44,8 @@ private:
     bool ValidateLanguage(int);
     bool ValidateStudyType(int);
     bool ValidateSemester(int);
+
+    void ValueChanged(int);
 
     QVBoxLayout* addingLayout;
     QVBoxLayout* widgetLayout;
@@ -51,10 +65,13 @@ private:
     QComboBox* studyType;
     QComboBox* studyYear;
     QComboBox* semester;
+    QComboBox* studyForm;
     QComboBox* ending;
     QSpinBox* groupSize;
     QSpinBox* creditsNum;
     QPushButton* btnAdd;
 
     QList<SubjectModel> subjects;
+
+    QSqlQuery* _query;
 };

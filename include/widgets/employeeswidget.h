@@ -10,6 +10,7 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include <QLineEdit>
+#include <QSqlQuery>
 
 class EmployeesWidget : public QWidget
 {
@@ -19,6 +20,15 @@ public:
     explicit EmployeesWidget(QWidget* parent = nullptr);
     ~EmployeesWidget();
 
+    QList<EmployeeModel>* GetEmployees(){ return &employees; }
+    void LoadDb(QSqlQuery* query);
+
+    // DB
+private:
+    void LoadEmployeesFromDb();
+    void InsertEmployeeToDb(EmployeeModel model);
+    void DeleteEmployeeFromDb(QUuid id);
+    QString ConvertUuidToString(QUuid id);
 private:
     void SetupAddingLayout();
     void SetupEmployees();
@@ -31,8 +41,8 @@ private:
     bool ValidateEmployee();
 
     bool ValidateIsDoctoral();
-    bool ValidateEmail(QString email);
-    bool ValidatePhoneNumber(QString number);
+    //bool ValidateEmail(QString email);
+    //bool ValidatePhoneNumber(QString number);
 
     QVBoxLayout* widgetLayout;
     QVBoxLayout* addingLayout;
@@ -49,8 +59,10 @@ private:
     QLineEdit* emailHome;
     QLineEdit* office;
     QComboBox* isDoctoral;
-    QDoubleSpinBox* harnessType; // typ úvazku
+    QDoubleSpinBox* harnessType; // typ ï¿½vazku
     QPushButton* btnAdd;
 
     QList<EmployeeModel> employees;
+
+    QSqlQuery* _query;
 };

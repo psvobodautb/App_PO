@@ -5,11 +5,14 @@
 #include <QMessageBox>
 #include <QUuid>
 #include <QHBoxLayout>
+#include <QString>
 
 #include "include/Enums.h"
 
+static const char* GROUP_SIZE = "group";
+
 SubjectsWidget::SubjectsWidget(QWidget *parent) :
-    QWidget(parent)
+    QWidget(parent), _query(nullptr)
 {
     addingLayout = new QVBoxLayout();
     widgetLayout = new QVBoxLayout();
@@ -35,6 +38,87 @@ SubjectsWidget::~SubjectsWidget()
     delete subjectsLayout;
 }
 
+void SubjectsWidget::LoadDb(QSqlQuery* query)
+{
+    if(query != nullptr){
+        _query = query;
+        LoadSubjectsFromDb();
+    }
+}
+
+void SubjectsWidget::LoadSubjectsFromDb()
+{
+    _query->exec("Select * from Subjects");
+
+    while(_query->next()){
+        SubjectModel model;
+
+        model.id = _query->value("id").toUuid();
+        model.shortcut = _query->value("shortcut").toString();
+        model.name = _query->value("name").toString();
+        model.lecturesNum = _query->value("lecturesNum").toInt();
+        model.seminarsNum = _query->value("seminarsNum").toInt();
+        model.excercisesNum = _query->value("excercisesNum").toInt();
+        model.weeksNum = _query->value("weeksNum").toInt();
+        model.isEnglish = _query->value("isEnglish").toBool();
+        model.isCombined = _query->value("isCombined").toBool();
+        model.studyYear = _query->value("studyYear").toInt();
+        model.isWinterSemester = _query->value("isWinterSemester").toBool();
+        model.studyForm = _query->value("studyForm").toInt();
+        model.ending = _query->value("ending").toInt();
+        model.groupSize = _query->value("groupSize").toInt();
+        model.credits = _query->value("credits").toInt();
+
+        subjects.append(model);
+        SetupSubjects();
+    }
+}
+
+void SubjectsWidget::InsertSubjectToDb(SubjectModel model)
+{
+    if(_query != nullptr){
+
+        _query->prepare("INSERT INTO Subjects VALUES(:id, :shortcut, :name, :lecturesNum, :seminarsNum, :excercisesNum, :weeksNum, :isEnglish,"
+                        " :isCombined, :studyYear, :isWinterSemester, :studyForm, :ending, :groupSize, :credits)");
+        _query->bindValue(0, ConvertUuidToString(model.id));
+        _query->bindValue(1, model.shortcut);
+        _query->bindValue(2, model.name);
+        _query->bindValue(3, model.lecturesNum);
+        _query->bindValue(4, model.seminarsNum);
+        _query->bindValue(5, model.excercisesNum);
+        _query->bindValue(6, model.weeksNum);
+        _query->bindValue(7, model.isEnglish);
+        _query->bindValue(8, model.isCombined);
+        _query->bindValue(9, model.studyYear);
+        _query->bindValue(10, model.isWinterSemester);
+        _query->bindValue(11, model.studyForm);
+        _query->bindValue(12, model.ending);
+        _query->bindValue(13, model.groupSize);
+        _query->bindValue(14, model.credits);
+
+        _query->exec();
+    }
+}
+
+void SubjectsWidget::DeleteSubjectFromDb(QUuid id)
+{
+    if(_query != nullptr){
+        _query->prepare("DELETE FROM Subjects WHERE id=:id");
+        _query->bindValue(0, ConvertUuidToString(id));
+        _query->exec();
+    }
+}
+
+QString SubjectsWidget::ConvertUuidToString(QUuid id)
+{
+    QString str = id.toString();
+    str = str.left(str.count() - 1);
+    str = str.right(str.count() - 1);
+
+    qDebug() << str;
+    return str;
+}
+
 void SubjectsWidget::SetupSubjectsLayout()
 {
     ClearSubjectsLayout();
@@ -53,9 +137,10 @@ void SubjectsWidget::SetupAddingLayout()
     lrow->addWidget(new QLabel("Cvičení"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Týdny"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Jazyk"), Qt::AlignCenter);
-    lrow->addWidget(new QLabel("Studium"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Typ"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Ročník"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Semestr"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Studium"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Ukončení"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Velikost skupiny"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Počet kreditů"), Qt::AlignCenter);
@@ -113,10 +198,16 @@ void SubjectsWidget::SetupAddingLayout()
     semester->addItem("Zimní", Semester::Winter);
     lrow->addWidget(semester, Qt::AlignLeft | Qt::AlignTop);
 
+    studyForm = new QComboBox;
+    studyForm->addItem("Bakalářský", StudyForm::Bachelor);
+    studyForm->addItem("Magisterský", StudyForm::Master);
+    studyForm->addItem("Doktorský", StudyForm::Doctoral);
+    lrow->addWidget(studyForm, Qt::AlignLeft | Qt::AlignTop);
+
     ending = new QComboBox;
-    ending->addItem("Zápočet", Ending::Credit);
-    ending->addItem("Klasifikovaný zápočet", Ending::ClassifiedCredit);
-    ending->addItem("Zkouška", Ending::Exam);
+    ending->addItem("Zápočet", LabelType::Credit);
+    ending->addItem("Klasifikovaný zápočet", LabelType::ClassifiedCredit);
+    ending->addItem("Zkouška", LabelType::Exam);
     lrow->addWidget(ending, Qt::AlignLeft | Qt::AlignTop);
 
     groupSize = new QSpinBox;
@@ -173,7 +264,7 @@ void SubjectsWidget::SetupSubjects()
             break;
         case StudyYear::Second:
             studyYearStr = "2.";
-            break; 
+            break;
         case StudyYear::Third:
             studyYearStr = "3.";
             break;
@@ -193,15 +284,32 @@ void SubjectsWidget::SetupSubjects()
         else
             lrow->addWidget(new QLabel("Letní"));
 
+        QString formStr = "";
+        switch (subjects.at(i).studyForm) {
+        case StudyForm::Bachelor:
+            formStr = "Bakalářský";
+            break;
+        case StudyForm::Master:
+            formStr = "Magisterský";
+            break;
+        case StudyForm::Doctoral:
+            formStr = "Doktorský";
+            break;
+        default:
+            break;
+        }
+
+        lrow->addWidget(new QLabel(formStr));
+
         QString endingStr = "";
         switch (subjects.at(i).ending) {
-        case Ending::Credit:
+        case LabelType::Credit:
             endingStr = "Zápočet";
             break;
-        case Ending::ClassifiedCredit:
+        case LabelType::ClassifiedCredit:
             endingStr = "Klasifikovaný zápočet";
             break;
-        case Ending::Exam:
+        case LabelType::Exam:
             endingStr = "Zkouška";
             break;
         default:
@@ -209,13 +317,18 @@ void SubjectsWidget::SetupSubjects()
         }
         lrow->addWidget(new QLabel(endingStr));
 
-        lrow->addWidget(new QLabel(QString::number(subjects.at(i).groupSize)));
+        QSpinBox* groupSize = new QSpinBox();
+        groupSize->setValue(subjects.at(i).groupSize);
+        groupSize->setRange(1,500);
+        groupSize->setProperty(GROUP_SIZE,QVariant(i));
+        connect(groupSize, &QSpinBox::valueChanged, this, &SubjectsWidget::ValueChanged);
+        lrow->addWidget(groupSize);
 
         lrow->addWidget(new QLabel(QString::number(subjects.at(i).credits)));
 
         QPushButton* deleteBtn = new QPushButton("Smazat");
         deleteBtn->setProperty("row", i);
-        
+
         lrow->addWidget(deleteBtn);
         connect(deleteBtn, &QPushButton::released, this, &SubjectsWidget::DeleteSubject);
 
@@ -253,8 +366,8 @@ void SubjectsWidget::AddSubject()
 {
     bool canAdd = ValidateSubject();
 
-    if (!canAdd) 
-        QMessageBox::warning(this,"Neplatný předmět", 
+    if (!canAdd)
+        QMessageBox::warning(this,"Neplatný předmět",
             "Nevyplnil jste všechny údaje k předmětu!\nZkontrolujte název, zkratku a počty vyučovacích hodin!", QMessageBox::Close);
     else
     {
@@ -275,14 +388,21 @@ void SubjectsWidget::AddSubject()
         m.credits = creditsNum->value();
 
         subjects.append(m);
+
+        SetupSubjectsLayout();
+
+        InsertSubjectToDb(m);
     }
 
-    SetupSubjectsLayout();
+
 }
 
 void SubjectsWidget::DeleteSubject()
 {
     QPushButton* btn = dynamic_cast<QPushButton*>(QObject::sender());
+
+    QUuid id = subjects.at(btn->property("row").toInt()).id;
+    DeleteSubjectFromDb(id);
 
     subjectsLayout->removeItem(subjectsLayout->itemAt(btn->property("row").toInt()));
     subjects.removeAt(btn->property("row").toInt());
@@ -310,7 +430,7 @@ bool SubjectsWidget::ValidateLanguage(int lang)
 {
     if (lang == Language::English)
         return true;
-        
+
     return false;
 }
 
@@ -328,4 +448,15 @@ bool SubjectsWidget::ValidateSemester(int s)
         return true;
 
     return false;
+}
+
+void SubjectsWidget::ValueChanged(int value)
+{
+    QSpinBox* sender = qobject_cast<QSpinBox*>(QObject::sender());
+
+    if(sender != nullptr){
+        int position = sender->property(GROUP_SIZE).toInt();
+        subjects[position].groupSize = value;
+        qDebug()<< subjects[position].groupSize;
+    }
 }

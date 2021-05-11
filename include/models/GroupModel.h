@@ -18,7 +18,7 @@ public:
 	QString name;
 	bool isCombined;
 	int year;
-	int semester;
+    bool isWinterSemester;
 	int studentsNum;
 	int studyForm;
 

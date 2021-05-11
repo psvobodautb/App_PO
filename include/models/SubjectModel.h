@@ -22,6 +22,7 @@ public:
     bool isCombined;
     int studyYear;
     bool isWinterSemester;
+    int studyForm;
     int ending;
     int groupSize;
     int credits;

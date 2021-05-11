@@ -21,6 +21,7 @@ void SubjectModel::assign(const SubjectModel m)
     isCombined = m.isCombined;
     studyYear = m.studyYear;
     isWinterSemester = m.isWinterSemester;
+    studyForm = m.studyForm;
     ending = m.ending;
     groupSize = m.groupSize;
     credits = m.credits;

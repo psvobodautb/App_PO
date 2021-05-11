@@ -14,12 +14,13 @@ void GroupModel::assign(const GroupModel m)
 	name = m.name;
 	isCombined = m.isCombined;
 	year = m.year;
-	semester = m.semester;
+    isWinterSemester = m.isWinterSemester;
 	studentsNum = m.studentsNum;
 	studyForm = m.studyForm;
 }
 
 void GroupModel::operator=(const GroupModel m)
 {
-	assign(m);
+    assign(m);
 }
+

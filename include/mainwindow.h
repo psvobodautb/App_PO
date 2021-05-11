@@ -3,6 +3,9 @@
 
 #include <QMainWindow>
 
+#include <QtSql/QSqlDatabase>
+#include <QtSql/QSqlQuery>
+
 class QTabWidget;
 class SubjectsWidget;
 class EmployeesWidget;
@@ -24,5 +27,7 @@ private:
     GroupsWidget* groups;
     LabelsWidget* labels;
 
+    QSqlDatabase db;
+    QSqlQuery query;
 };
 #endif // MAINWINDOW_H

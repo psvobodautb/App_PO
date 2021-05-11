@@ -23,14 +23,17 @@ enum Semester {
     Winter
 };
 
-enum Ending {
-    Credit,
-    ClassifiedCredit,
-    Exam
-};
-
 enum StudyForm {
     Bachelor,
     Master,
     Doctoral
+};
+
+enum LabelType{
+    Credit,
+    ClassifiedCredit,
+    Exam,
+    Lecture,
+    Seminar,
+    Excercise
 };

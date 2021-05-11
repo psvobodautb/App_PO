@@ -2,11 +2,11 @@
 
 #include <QLabel>
 #include <QMessageBox>
-#include <QRegExp>
+//#include <QRegExp>
 #include <QDebug>
 
 EmployeesWidget::EmployeesWidget(QWidget* parent) :
-    QWidget(parent)
+    QWidget(parent), _query(nullptr)
 {
     widgetLayout = new QVBoxLayout();
     scrollArea = new QScrollArea();
@@ -31,6 +31,78 @@ EmployeesWidget::EmployeesWidget(QWidget* parent) :
 EmployeesWidget::~EmployeesWidget()
 {
     delete widgetLayout;
+}
+
+void EmployeesWidget::LoadDb(QSqlQuery *query)
+{
+    if(query != nullptr){
+        _query = query;
+        LoadEmployeesFromDb();
+    }
+}
+
+void EmployeesWidget::LoadEmployeesFromDb()
+{
+    _query->exec("Select * from employees");
+
+    while(_query->next()){
+        EmployeeModel model;
+
+        model.id = _query->value("id").toUuid();
+        model.name = _query->value("name").toString();
+        model.surname = _query->value("surname").toString();
+        model.phoneNumHome = _query->value("phoneNumHome").toString();
+        model.phoneNumWork = _query->value("phoneNumWork").toString();
+        model.emailWork = _query->value("emailWork").toString();
+        model.emailHome = _query->value("emailHome").toString();
+        model.office = _query->value("office").toString();
+        model.isDoctoral = _query->value("isDoctoral").toBool();
+        model.harnessType = _query->value("harnessType").toDouble();
+        model.workPointsNum = _query->value("workPointsNum").toInt();
+
+        employees.append(model);
+        SetupEmployees();
+    }
+}
+
+void EmployeesWidget::InsertEmployeeToDb(EmployeeModel model)
+{
+    if(_query != nullptr){
+
+        _query->prepare("INSERT INTO Employees VALUES(:id, :name, :surname, :phoneNumHome, :phoneNumWork, :emailWork, :emailHome,"
+        " :office, :isDoctoral, :harnessType, :workPointsNum)");
+        _query->bindValue(0, ConvertUuidToString(model.id));
+        _query->bindValue(1, model.name);
+        _query->bindValue(2, model.surname);
+        _query->bindValue(3, model.phoneNumHome);
+        _query->bindValue(4, model.phoneNumWork);
+        _query->bindValue(5, model.emailWork);
+        _query->bindValue(6, model.emailHome);
+        _query->bindValue(7, model.office);
+        _query->bindValue(8, model.isDoctoral);
+        _query->bindValue(9, model.harnessType);
+        _query->bindValue(10, 0);
+
+        _query->exec();
+    }
+}
+
+void EmployeesWidget::DeleteEmployeeFromDb(QUuid id)
+{
+    if(_query != nullptr){
+        _query->prepare("DELETE FROM Employees WHERE id=:id");
+        _query->bindValue(0, ConvertUuidToString(id));
+        _query->exec();
+    }
+}
+
+QString EmployeesWidget::ConvertUuidToString(QUuid id)
+{
+    QString str = id.toString();
+    str = str.left(str.count() - 1);
+    str = str.right(str.count() - 1);
+
+    return str;
 }
 
 void EmployeesWidget::SetupAddingLayout()
@@ -163,31 +235,27 @@ void EmployeesWidget::ClearEmployeesLayout()
 
 void EmployeesWidget::AddEmployee()
 {
-    if (!ValidateEmail(emailHome->text()) || !ValidateEmail(emailWork->text())) {
+    bool canAdd = ValidateEmployee();
+
+    if (!canAdd)
         QMessageBox::warning(this, "Neplatný zaměstnanec",
-            "Zadal jste neplatný email!", QMessageBox::Close);
-    } 
+            "Nevyplnil jste všechny údaje o zaměstnanci!", QMessageBox::Close);
     else {
-        bool canAdd = ValidateEmployee();
+        EmployeeModel m;
+        m.id = QUuid::createUuid();
+        m.name = name->text();
+        m.surname = surname->text();
+        m.phoneNumHome = phoneNumHome->text();
+        m.phoneNumWork = phoneNumWork->text();
+        m.emailWork = emailWork->text();
+        m.emailHome = emailHome->text();
+        m.office = office->text();
+        m.isDoctoral = ValidateIsDoctoral();
+        m.harnessType = harnessType->value();
 
-        if (!canAdd)
-            QMessageBox::warning(this, "Neplatný zaměstnanec",
-                "Nevyplnil jste všechny údaje o zaměstnanci!", QMessageBox::Close);
-        else {
-            EmployeeModel m;
-            m.id = QUuid::createUuid();
-            m.name = name->text();
-            m.surname = surname->text();
-            m.phoneNumHome = phoneNumHome->text();
-            m.phoneNumWork = phoneNumWork->text();
-            m.emailWork = emailWork->text();
-            m.emailHome = emailHome->text();
-            m.office = office->text();
-            m.isDoctoral = ValidateIsDoctoral();
-            m.harnessType = harnessType->value();
+        employees.append(m);
 
-            employees.append(m);
-        }
+        InsertEmployeeToDb(m);
     }
 
     SetupEmployeesLayout();
@@ -196,6 +264,9 @@ void EmployeesWidget::AddEmployee()
 void EmployeesWidget::DeleteEmployee()
 {
     QPushButton* btn = dynamic_cast<QPushButton*>(QObject::sender());
+
+    QUuid id = employees.at(btn->property("row").toInt()).id;
+    DeleteEmployeeFromDb(id);
 
     employeesLayout->removeItem(employeesLayout->itemAt(btn->property("row").toInt()));
     employees.removeAt(btn->property("row").toInt());
@@ -233,20 +304,20 @@ bool EmployeesWidget::ValidateIsDoctoral()
     return true;
 }
 
-bool EmployeesWidget::ValidateEmail(QString email)
-{
-    qDebug() << email;
-    QRegExp mailREX("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b");
-    mailREX.setCaseSensitivity(Qt::CaseInsensitive);
-    mailREX.setPatternSyntax(QRegExp::RegExp);
-    return mailREX.exactMatch(email);
-}
-
-bool EmployeesWidget::ValidatePhoneNumber(QString number)
-{
-    qDebug() << number;
-    QRegExp mailREX("^+[1-9]{1}[0-9]{3,14}$");
-    mailREX.setCaseSensitivity(Qt::CaseInsensitive);
-    mailREX.setPatternSyntax(QRegExp::RegExp);
-    return mailREX.exactMatch(number);
-}
+//bool EmployeesWidget::ValidateEmail(QString email)
+//{
+//    qDebug() << email;
+//    QRegExp mailREX("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b");
+//    mailREX.setCaseSensitivity(Qt::CaseInsensitive);
+//    mailREX.setPatternSyntax(QRegExp::RegExp);
+//    return mailREX.exactMatch(email);
+//}
+//
+//bool EmployeesWidget::ValidatePhoneNumber(QString number)
+//{
+//    qDebug() << number;
+//    QRegExp mailREX("^+[1-9]{1}[0-9]{3,14}$");
+//    mailREX.setCaseSensitivity(Qt::CaseInsensitive);
+//    mailREX.setPatternSyntax(QRegExp::RegExp);
+//    return mailREX.exactMatch(number);
+//}

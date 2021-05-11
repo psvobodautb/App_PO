@@ -5,8 +5,10 @@
 
 #include "include/Enums.h"
 
+const char * NUM_PROPERTY = "num";
+
 GroupsWidget::GroupsWidget(QWidget* parent) :
-    QWidget(parent)
+    QWidget(parent), _query(nullptr)
 {
     widgetLayout = new QVBoxLayout();
     scrollArea = new QScrollArea();
@@ -33,6 +35,72 @@ GroupsWidget::~GroupsWidget()
     delete widgetLayout;
 }
 
+void GroupsWidget::LoadDb(QSqlQuery *query)
+{
+    if(query != nullptr){
+        _query = query;
+        LoadGroupsFromDb();
+    }
+}
+
+void GroupsWidget::LoadGroupsFromDb()
+{
+    _query->exec("Select * from Groups");
+
+    while(_query->next()){
+        GroupModel model;
+
+        model.id = _query->value("id").toUuid();
+        model.shortcut = _query->value("shortcut").toString();
+        model.name = _query->value("name").toString();
+        model.isCombined = _query->value("isCombined").toBool();
+        model.year = _query->value("year").toInt();
+        model.isWinterSemester = _query->value("isWinterSemester").toBool();
+        model.studentsNum = _query->value("studentsNum").toInt();
+        model.studyForm = _query->value("studyForm").toInt();
+
+        groups.append(model);
+        SetupGroups();
+    }
+}
+
+void GroupsWidget::InsertGroupToDb(GroupModel model)
+{
+    if(_query != nullptr){
+
+        _query->prepare("INSERT INTO Groups VALUES(:id, :shortcut, :name, :isCombined, :year, :isWinterSemester, :studentsNum, :studyFrom)");
+        _query->bindValue(0, ConvertUuidToString(model.id));
+        _query->bindValue(1, model.shortcut);
+        _query->bindValue(2, model.name);
+        _query->bindValue(3, model.isCombined);
+        _query->bindValue(4, model.year);
+        _query->bindValue(5, model.isWinterSemester);
+        _query->bindValue(6, model.studentsNum);
+        _query->bindValue(7, model.studyForm);
+
+        _query->exec();
+    }
+}
+
+void GroupsWidget::DeleteGroupFromDb(QUuid id)
+{
+    if(_query != nullptr){
+        _query->prepare("DELETE FROM Groups WHERE id=:id");
+        _query->bindValue(0, ConvertUuidToString(id));
+        _query->exec();
+    }
+}
+
+QString GroupsWidget::ConvertUuidToString(QUuid id)
+{
+    QString str = id.toString();
+    str = str.left(str.count() - 1);
+    str = str.right(str.count() - 1);
+
+    qDebug() << str;
+    return str;
+}
+
 void GroupsWidget::SetupAddingLayout()
 {
     addingLayout->addWidget(new QLabel("Nový:"));
@@ -43,8 +111,8 @@ void GroupsWidget::SetupAddingLayout()
     lrow->addWidget(new QLabel("Typ"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Ročník"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Semestr"), Qt::AlignCenter);
-    lrow->addWidget(new QLabel("Počet studentů"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Studium"), Qt::AlignCenter);
+    lrow->addWidget(new QLabel("Počet studentů"), Qt::AlignCenter);
     lrow->addWidget(new QLabel(""), Qt::AlignCenter);
 
     addingLayout->addLayout(lrow);
@@ -74,16 +142,16 @@ void GroupsWidget::SetupAddingLayout()
     semester->addItem("Zimní", Semester::Winter);
     lrow->addWidget(semester, Qt::AlignLeft | Qt::AlignTop);
 
-    studentsNum = new QSpinBox;
-    studentsNum->setMinimum(1);
-    studentsNum->setMaximum(1000);
-    lrow->addWidget(studentsNum, Qt::AlignLeft | Qt::AlignTop);
-
     studyForm = new QComboBox;
     studyForm->addItem("Bakalářský", StudyForm::Bachelor);
     studyForm->addItem("Magisterský", StudyForm::Master);
     studyForm->addItem("Doktorský", StudyForm::Doctoral);
     lrow->addWidget(studyForm, Qt::AlignLeft | Qt::AlignTop);
+
+    studentsNum = new QSpinBox;
+    studentsNum->setMinimum(1);
+    studentsNum->setMaximum(1000);
+    lrow->addWidget(studentsNum, Qt::AlignLeft | Qt::AlignTop);
 
     btnAdd = new QPushButton("Přidat");
     lrow->addWidget(btnAdd, Qt::AlignLeft | Qt::AlignTop);
@@ -136,12 +204,10 @@ void GroupsWidget::SetupGroups()
 
         lrow->addWidget(new QLabel(yearStr));
 
-        if (groups.at(i).semester == Semester::Summer)
+        if (!groups.at(i).isWinterSemester)
             lrow->addWidget(new QLabel("Letní"));
         else
             lrow->addWidget(new QLabel("Zimní"));
-
-        lrow->addWidget(new QLabel(QString::number(groups.at(i).studentsNum)));
 
         QString formStr = "";
         switch (groups.at(i).studyForm) {
@@ -159,6 +225,13 @@ void GroupsWidget::SetupGroups()
         }
 
         lrow->addWidget(new QLabel(formStr));
+
+        QSpinBox* studentsNumEdit = new QSpinBox();
+        studentsNumEdit->setValue(groups.at(i).studentsNum);
+        studentsNumEdit->setRange(1,500);
+        studentsNumEdit->setProperty(NUM_PROPERTY,QVariant(i));
+        connect(studentsNumEdit, &QSpinBox::valueChanged, this, &GroupsWidget::ValueChanged);
+        lrow->addWidget(studentsNumEdit);
 
         QPushButton* deleteBtn = new QPushButton("Smazat");
         deleteBtn->setProperty("row", i);
@@ -216,11 +289,13 @@ void GroupsWidget::AddGroup()
         m.name = name->text();
         m.isCombined = ValidateStudyType(studyType->currentIndex());
         m.year = studyYear->currentIndex();
-        m.semester = semester->currentIndex();
+        m.isWinterSemester = ValidateSemester(semester->currentIndex());
         m.studentsNum = studentsNum->value();
         m.studyForm = studyForm->currentIndex();
 
         groups.append(m);
+
+        InsertGroupToDb(m);
     }
 
     SetupGroupsLayout();
@@ -229,6 +304,9 @@ void GroupsWidget::AddGroup()
 void GroupsWidget::DeleteGroup()
 {
     QPushButton* btn = dynamic_cast<QPushButton*>(QObject::sender());
+
+    QUuid id = groups.at(btn->property("row").toInt()).id;
+    DeleteGroupFromDb(id);
 
     groupsLayout->removeItem(groupsLayout->itemAt(btn->property("row").toInt()));
     groups.removeAt(btn->property("row").toInt());
@@ -255,4 +333,22 @@ int GroupsWidget::ValidateStudyType(int type)
         return true;
 
     return false;
+}
+
+bool GroupsWidget::ValidateSemester(int s)
+{
+    if (s == Semester::Winter)
+        return true;
+
+    return false;
+}
+
+void GroupsWidget::ValueChanged(int value)
+{
+    QSpinBox* sender = qobject_cast<QSpinBox*>(QObject::sender());
+
+    if(sender != nullptr){
+        int position = sender->property(NUM_PROPERTY).toInt();
+        groups[position].studentsNum = value;
+    }
 }
