@@ -2,6 +2,7 @@
 
 #include <QLabel>
 #include <QMessageBox>
+#include <QIntValidator>
 
 #include "include/Enums.h"
 
@@ -96,8 +97,6 @@ QString GroupsWidget::ConvertUuidToString(QUuid id)
     QString str = id.toString();
     str = str.left(str.count() - 1);
     str = str.right(str.count() - 1);
-
-    qDebug() << str;
     return str;
 }
 
@@ -148,9 +147,9 @@ void GroupsWidget::SetupAddingLayout()
     studyForm->addItem("Doktorský", StudyForm::Doctoral);
     lrow->addWidget(studyForm, Qt::AlignLeft | Qt::AlignTop);
 
-    studentsNum = new QSpinBox;
-    studentsNum->setMinimum(1);
-    studentsNum->setMaximum(1000);
+    studentsNum = new QLineEdit;
+    studentsNum->setValidator(new QIntValidator(1,1000));
+    studentsNum->setText(QString("%1").arg(1));
     lrow->addWidget(studentsNum, Qt::AlignLeft | Qt::AlignTop);
 
     btnAdd = new QPushButton("Přidat");
@@ -226,11 +225,12 @@ void GroupsWidget::SetupGroups()
 
         lrow->addWidget(new QLabel(formStr));
 
-        QSpinBox* studentsNumEdit = new QSpinBox();
-        studentsNumEdit->setValue(groups.at(i).studentsNum);
-        studentsNumEdit->setRange(1,500);
+        QLineEdit* studentsNumEdit = new QLineEdit();
+        studentsNumEdit->setFixedWidth(width() / 3);
+        studentsNumEdit->setText(QString("%1").arg(groups.at(i).studentsNum));
+        studentsNumEdit->setValidator(new QIntValidator(1,1000));
         studentsNumEdit->setProperty(NUM_PROPERTY,QVariant(i));
-        connect(studentsNumEdit, &QSpinBox::valueChanged, this, &GroupsWidget::ValueChanged);
+        connect(studentsNumEdit, &QLineEdit::textChanged, this, &GroupsWidget::ValueChanged);
         lrow->addWidget(studentsNumEdit);
 
         QPushButton* deleteBtn = new QPushButton("Smazat");
@@ -290,7 +290,7 @@ void GroupsWidget::AddGroup()
         m.isCombined = ValidateStudyType(studyType->currentIndex());
         m.year = studyYear->currentIndex();
         m.isWinterSemester = ValidateSemester(semester->currentIndex());
-        m.studentsNum = studentsNum->value();
+        m.studentsNum = studentsNum->text().toInt();
         m.studyForm = studyForm->currentIndex();
 
         groups.append(m);
@@ -343,12 +343,19 @@ bool GroupsWidget::ValidateSemester(int s)
     return false;
 }
 
-void GroupsWidget::ValueChanged(int value)
+void GroupsWidget::ValueChanged(const QString& text)
 {
-    QSpinBox* sender = qobject_cast<QSpinBox*>(QObject::sender());
+    QLineEdit* sender = qobject_cast<QLineEdit*>(QObject::sender());
 
     if(sender != nullptr){
         int position = sender->property(NUM_PROPERTY).toInt();
-        groups[position].studentsNum = value;
+        groups[position].studentsNum = text.toInt();
+
+        if(_query != nullptr){
+            _query->prepare("UPDATE Groups SET studentsNum=:studentsNum WHERE id=:id");
+            _query->bindValue(0,text.toInt());
+            _query->bindValue(1,ConvertUuidToString(groups[position].id));
+            _query->exec();
+        }
     }
 }

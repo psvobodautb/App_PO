@@ -44,7 +44,7 @@ private:
     int ValidateStudyType(int);
     bool ValidateSemester(int);
 
-    void ValueChanged(int);
+    void ValueChanged(const QString&);
 
     QVBoxLayout* widgetLayout;
     QVBoxLayout* addingLayout;
@@ -58,7 +58,7 @@ private:
     QComboBox* studyType;
     QComboBox* studyYear;
     QComboBox* semester;
-    QSpinBox* studentsNum;
+    QLineEdit* studentsNum;
     QComboBox* studyForm;
     QPushButton* btnAdd;
 

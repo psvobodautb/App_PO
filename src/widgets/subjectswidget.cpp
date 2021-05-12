@@ -6,6 +6,7 @@
 #include <QUuid>
 #include <QHBoxLayout>
 #include <QString>
+#include <QIntValidator>
 
 #include "include/Enums.h"
 
@@ -115,7 +116,6 @@ QString SubjectsWidget::ConvertUuidToString(QUuid id)
     str = str.left(str.count() - 1);
     str = str.right(str.count() - 1);
 
-    qDebug() << str;
     return str;
 }
 
@@ -210,9 +210,9 @@ void SubjectsWidget::SetupAddingLayout()
     ending->addItem("Zkouška", LabelType::Exam);
     lrow->addWidget(ending, Qt::AlignLeft | Qt::AlignTop);
 
-    groupSize = new QSpinBox;
-    groupSize->setMinimum(1);
-    groupSize->setMaximum(1000);
+    groupSize = new QLineEdit;
+    groupSize->setValidator(new QIntValidator(1,1000));
+    groupSize->setText(QString("%1").arg(1));
     lrow->addWidget(groupSize, Qt::AlignLeft | Qt::AlignTop);
 
     creditsNum = new QSpinBox;
@@ -317,11 +317,12 @@ void SubjectsWidget::SetupSubjects()
         }
         lrow->addWidget(new QLabel(endingStr));
 
-        QSpinBox* groupSize = new QSpinBox();
-        groupSize->setValue(subjects.at(i).groupSize);
-        groupSize->setRange(1,500);
+        QLineEdit* groupSize = new QLineEdit();
+        groupSize->setFixedWidth(width()/3);
+        groupSize->setText(QString("%1").arg(subjects.at(i).groupSize));
+        groupSize->setValidator(new QIntValidator(1,1000));
         groupSize->setProperty(GROUP_SIZE,QVariant(i));
-        connect(groupSize, &QSpinBox::valueChanged, this, &SubjectsWidget::ValueChanged);
+        connect(groupSize, &QLineEdit::textChanged, this, &SubjectsWidget::ValueChanged);
         lrow->addWidget(groupSize);
 
         lrow->addWidget(new QLabel(QString::number(subjects.at(i).credits)));
@@ -384,7 +385,7 @@ void SubjectsWidget::AddSubject()
         m.studyYear = studyYear->currentIndex();
         m.isWinterSemester = ValidateSemester(semester->currentIndex());
         m.ending = semester->currentIndex();
-        m.groupSize = groupSize->value();
+        m.groupSize = groupSize->text().toInt();
         m.credits = creditsNum->value();
 
         subjects.append(m);
@@ -393,8 +394,6 @@ void SubjectsWidget::AddSubject()
 
         InsertSubjectToDb(m);
     }
-
-
 }
 
 void SubjectsWidget::DeleteSubject()
@@ -450,13 +449,19 @@ bool SubjectsWidget::ValidateSemester(int s)
     return false;
 }
 
-void SubjectsWidget::ValueChanged(int value)
+void SubjectsWidget::ValueChanged(const QString& text)
 {
-    QSpinBox* sender = qobject_cast<QSpinBox*>(QObject::sender());
+    QLineEdit* sender = qobject_cast<QLineEdit*>(QObject::sender());
 
     if(sender != nullptr){
         int position = sender->property(GROUP_SIZE).toInt();
-        subjects[position].groupSize = value;
-        qDebug()<< subjects[position].groupSize;
+        subjects[position].groupSize = text.toInt();
+
+        if(_query != nullptr){
+            _query->prepare("UPDATE Subjects SET groupSize=:groupSize WHERE id=:id");
+            _query->bindValue(0,text.toInt());
+            _query->bindValue(1,ConvertUuidToString(subjects[position].id));
+            _query->exec();
+        }
     }
 }
