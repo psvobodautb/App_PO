@@ -24,12 +24,15 @@ set(SOURCE_LIST
     src/widgets/employeeswidget.cpp
     src/widgets/groupswidget.cpp
     src/widgets/labelswidget.cpp
+    src/widgets/connectingwidget.cpp
 
     include/mainwindow.h
+    include/functions.h
     include/widgets/subjectswidget.h
     include/widgets/employeeswidget.h
     include/widgets/groupswidget.h
     include/widgets/labelswidget.h
+    include/widgets/connectingwidget.h
 
     src/models/employeemodel.cpp
     src/models/groupmodel.cpp

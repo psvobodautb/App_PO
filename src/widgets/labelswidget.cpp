@@ -3,11 +3,14 @@
 #include <QSpacerItem>
 #include <QVariant>
 #include <QMessageBox>
+#include <QVector>
+
+#include "include/Functions.h"
 
 static const char* SUBJECT_POSITION = "subject";
 
-LabelsWidget::LabelsWidget(QList<EmployeeModel>* e, QList<SubjectModel>* s, QList<GroupModel>* g, QWidget* parent) :
-    QWidget(parent), employees(e), subjects(s), groups(g)
+LabelsWidget::LabelsWidget(QList<EmployeeModel>* e, QList<SubjectModel>* s, QList<GroupModel>* g, QSqlQuery* query, QWidget* parent) :
+    QWidget(parent), employees(e), subjects(s), groups(g), _query(query)
 {
 
     widgetLayout = new QVBoxLayout();
@@ -91,24 +94,32 @@ void LabelsWidget::GenerateBtnClicked()
     unassigned->clear();
     assigned->clear();
 
-    qDebug() << "generovat";
-
     if(buttonGroup->checkedButton() != nullptr){
         int pos = buttonGroup->checkedButton()->property(SUBJECT_POSITION).toInt();
 
-        qDebug() << "pozice " << pos;
         if(pos >= 0 && subjects->count() > 0 && pos < subjects->count()){
             SubjectModel subject = subjects->at(pos);
             QList<GroupModel> groupsWithSubject;
 
+            _query->prepare("Select groupId from Connections where subjectId=:subjectId");
+            _query->bindValue(0,ConvertUuidToString(subject.id));
+            _query->exec();
+
+            QVector<QUuid> groupIds;
+
+            while(_query->next()){
+                groupIds.append(_query->value("groupId").toUuid());
+            }
+
             for(int i = 0; i < groups->count(); i++){
-                if(groups->at(i).year == subject.studyYear
-                        && groups->at(i).isWinterSemester == subject.isWinterSemester
-                        && groups->at(i).studyForm == subject.studyForm){
-                     groupsWithSubject.append(groups->at(i));
-                     GenerateLabels(subject,groupsWithSubject);
+                for(int j = 0; j < groupIds.count(); j++){
+                    if(groups->at(i).id == groupIds.at(j))
+                         groupsWithSubject.append(groups->at(i));
                 }
             }
+
+
+            GenerateLabels(subject,groupsWithSubject);
 
             if(groupsWithSubject.count() == 0)
                 QMessageBox::warning(this,"Chyba!","K předmětu nelze dohledat žádné skupiny!");
@@ -122,17 +133,15 @@ void LabelsWidget::GenerateLabels(SubjectModel model, QList<GroupModel> list)
         int studentsNum = list.at(i).studentsNum;
         int groupNum = 1;
 
-        qDebug() << studentsNum << model.groupSize;
-
         while(studentsNum > model.groupSize){
             studentsNum -= model.groupSize;
-            QString groupName = QString("%1%2").arg(model.shortcut).arg(groupNum);
+            QString groupName = QString("%1-%2-%3").arg(model.shortcut).arg(list.at(i).shortcut).arg(groupNum);
             groupNum += 1;
             unassigned->addItem(groupName);
         }
 
         if(studentsNum > 0){
-            QString groupName = QString("%1%2").arg(model.shortcut).arg(groupNum);
+            QString groupName = QString("%1-%2-%3").arg(model.shortcut).arg(list.at(i).shortcut).arg(groupNum);
             unassigned->addItem(groupName);
         }
     }

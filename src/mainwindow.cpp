@@ -15,10 +15,18 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->setCentralWidget(tabWidget);
 
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(qApp->applicationDirPath() + "/podb");
+
+    db.open();
+
+    query = QSqlQuery(db);
+    //query.exec("Select * from album");
+
     employees = new EmployeesWidget();
     subjects = new SubjectsWidget();
     groups = new GroupsWidget();
-    labels = new LabelsWidget(employees->GetEmployees(),subjects->GetSubjects(),groups->GetGroups());
+    labels = new LabelsWidget(employees->GetEmployees(),subjects->GetSubjects(),groups->GetGroups(), &query);
 
     tabWidget->addTab(subjects,"Předměty");
     tabWidget->addTab(employees,"Zaměstnanci");
@@ -28,14 +36,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(tabWidget, &QTabWidget::tabBarClicked, [this](){
         labels->SetupWidget();
     });
-
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(qApp->applicationDirPath() + "/podb");
-
-    db.open();
-
-    query = QSqlQuery(db);
-    //query.exec("Select * from album");
 
     if(db.isOpen()){
         subjects->LoadDb(&query);

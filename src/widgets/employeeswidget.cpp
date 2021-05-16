@@ -5,6 +5,8 @@
 //#include <QRegExp>
 #include <QDebug>
 
+#include "include/Functions.h"
+
 EmployeesWidget::EmployeesWidget(QWidget* parent) :
     QWidget(parent), _query(nullptr)
 {
@@ -94,15 +96,6 @@ void EmployeesWidget::DeleteEmployeeFromDb(QUuid id)
         _query->bindValue(0, ConvertUuidToString(id));
         _query->exec();
     }
-}
-
-QString EmployeesWidget::ConvertUuidToString(QUuid id)
-{
-    QString str = id.toString();
-    str = str.left(str.count() - 1);
-    str = str.right(str.count() - 1);
-
-    return str;
 }
 
 void EmployeesWidget::SetupAddingLayout()

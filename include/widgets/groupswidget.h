@@ -12,6 +12,7 @@
 #include <QSqlQuery>
 
 #include "include/models/GroupModel.h"
+#include "include/widgets/connectingwidget.h"
 
 class GroupsWidget : public QWidget
 {
@@ -29,7 +30,6 @@ private:
     void LoadGroupsFromDb();
     void InsertGroupToDb(GroupModel model);
     void DeleteGroupFromDb(QUuid id);
-    QString ConvertUuidToString(QUuid id);
 
 private:
     void SetupAddingLayout();
@@ -39,12 +39,15 @@ private:
 
     void AddGroup();
     void DeleteGroup();
+
     bool ValidateGroup();
 
     int ValidateStudyType(int);
     bool ValidateSemester(int);
 
     void ValueChanged(const QString&);
+
+    void AddSubjects();
 
     QVBoxLayout* widgetLayout;
     QVBoxLayout* addingLayout;
@@ -65,4 +68,6 @@ private:
     QList<GroupModel> groups;
 
     QSqlQuery* _query;
+
+    ConnectingWidget* connectingWidget;
 };

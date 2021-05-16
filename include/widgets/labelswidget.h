@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QRadioButton>
 #include <QButtonGroup>
+#include <QSqlQuery>
 
 #include "include/models/EmployeeModel.h"
 #include "include/models/SubjectModel.h"
@@ -23,7 +24,7 @@ class LabelsWidget : public QWidget
 	Q_OBJECT
 
 public:
-    explicit LabelsWidget(QList<EmployeeModel>* e, QList<SubjectModel>* s, QList<GroupModel>* g, QWidget* parent = nullptr);
+    explicit LabelsWidget(QList<EmployeeModel>* e, QList<SubjectModel>* s, QList<GroupModel>* g, QSqlQuery* query, QWidget* parent = nullptr);
 	~LabelsWidget();
 
     void SetupWidget();
@@ -50,6 +51,8 @@ private:
     QList<EmployeeModel>* employees;
     QList<SubjectModel>* subjects;
     QList<GroupModel>* groups;
+
+    QSqlQuery* _query;
 };
 
 #endif // LABELSWIDGET_H

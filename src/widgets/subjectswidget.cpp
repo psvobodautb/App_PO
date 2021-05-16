@@ -9,6 +9,7 @@
 #include <QIntValidator>
 
 #include "include/Enums.h"
+#include "include/Functions.h"
 
 static const char* GROUP_SIZE = "group";
 
@@ -107,16 +108,11 @@ void SubjectsWidget::DeleteSubjectFromDb(QUuid id)
         _query->prepare("DELETE FROM Subjects WHERE id=:id");
         _query->bindValue(0, ConvertUuidToString(id));
         _query->exec();
+
+        _query->prepare("DELETE FROM Connections WHERE subjectId=:subjectId");
+        _query->bindValue(0, ConvertUuidToString(id));
+        _query->exec();
     }
-}
-
-QString SubjectsWidget::ConvertUuidToString(QUuid id)
-{
-    QString str = id.toString();
-    str = str.left(str.count() - 1);
-    str = str.right(str.count() - 1);
-
-    return str;
 }
 
 void SubjectsWidget::SetupSubjectsLayout()
@@ -318,7 +314,7 @@ void SubjectsWidget::SetupSubjects()
         lrow->addWidget(new QLabel(endingStr));
 
         QLineEdit* groupSize = new QLineEdit();
-        groupSize->setFixedWidth(width()/3);
+        groupSize->setFixedWidth(120);
         groupSize->setText(QString("%1").arg(subjects.at(i).groupSize));
         groupSize->setValidator(new QIntValidator(1,1000));
         groupSize->setProperty(GROUP_SIZE,QVariant(i));

@@ -28,7 +28,6 @@ private:
     void LoadEmployeesFromDb();
     void InsertEmployeeToDb(EmployeeModel model);
     void DeleteEmployeeFromDb(QUuid id);
-    QString ConvertUuidToString(QUuid id);
 private:
     void SetupAddingLayout();
     void SetupEmployees();

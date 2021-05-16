@@ -29,7 +29,6 @@ private:
     void LoadSubjectsFromDb();
     void InsertSubjectToDb(SubjectModel model);
     void DeleteSubjectFromDb(QUuid id);
-    QString ConvertUuidToString(QUuid id);
 
 private:
     void SetupSubjectsLayout();

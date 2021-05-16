@@ -5,6 +5,7 @@
 #include <QIntValidator>
 
 #include "include/Enums.h"
+#include "include/Functions.h"
 
 const char * NUM_PROPERTY = "num";
 
@@ -27,19 +28,22 @@ GroupsWidget::GroupsWidget(QWidget* parent) :
     widgetLayout->addWidget(scrollArea);
 
     setLayout(widgetLayout);
-
     SetupAddingLayout();
 }
 
 GroupsWidget::~GroupsWidget()
 {
     delete widgetLayout;
+    delete connectingWidget;
 }
 
 void GroupsWidget::LoadDb(QSqlQuery *query)
 {
     if(query != nullptr){
         _query = query;
+
+        connectingWidget = new ConnectingWidget(_query);
+
         LoadGroupsFromDb();
     }
 }
@@ -89,15 +93,11 @@ void GroupsWidget::DeleteGroupFromDb(QUuid id)
         _query->prepare("DELETE FROM Groups WHERE id=:id");
         _query->bindValue(0, ConvertUuidToString(id));
         _query->exec();
-    }
-}
 
-QString GroupsWidget::ConvertUuidToString(QUuid id)
-{
-    QString str = id.toString();
-    str = str.left(str.count() - 1);
-    str = str.right(str.count() - 1);
-    return str;
+        _query->prepare("SELETE FROM Connections WHERE groupId=:id");
+        _query->bindValue(0, ConvertUuidToString(id));
+        _query->exec();
+    }
 }
 
 void GroupsWidget::SetupAddingLayout()
@@ -226,16 +226,22 @@ void GroupsWidget::SetupGroups()
         lrow->addWidget(new QLabel(formStr));
 
         QLineEdit* studentsNumEdit = new QLineEdit();
-        studentsNumEdit->setFixedWidth(width() / 3);
+        studentsNumEdit->setFixedWidth(200);
         studentsNumEdit->setText(QString("%1").arg(groups.at(i).studentsNum));
         studentsNumEdit->setValidator(new QIntValidator(1,1000));
         studentsNumEdit->setProperty(NUM_PROPERTY,QVariant(i));
         connect(studentsNumEdit, &QLineEdit::textChanged, this, &GroupsWidget::ValueChanged);
         lrow->addWidget(studentsNumEdit);
 
+        QPushButton* addSubjectsBtn = new QPushButton("Propojit s předměty");
+        addSubjectsBtn->setProperty("row",i);
+        addSubjectsBtn->setFixedWidth(140);
+        connect(addSubjectsBtn, &QPushButton::pressed, this, &GroupsWidget::AddSubjects);
+        lrow->addWidget(addSubjectsBtn);
+
         QPushButton* deleteBtn = new QPushButton("Smazat");
         deleteBtn->setProperty("row", i);
-
+        deleteBtn->setFixedWidth(100);
         lrow->addWidget(deleteBtn);
         connect(deleteBtn, &QPushButton::released, this, &GroupsWidget::DeleteGroup);
 
@@ -357,5 +363,19 @@ void GroupsWidget::ValueChanged(const QString& text)
             _query->bindValue(1,ConvertUuidToString(groups[position].id));
             _query->exec();
         }
+    }
+}
+
+void GroupsWidget::AddSubjects()
+{
+    QPushButton* sender = qobject_cast<QPushButton*>(QObject::sender());
+
+    if(sender != nullptr){
+        int pos = sender->property("row").toInt();
+
+        if(_query != nullptr)
+            connectingWidget->ShowWidget(groups[pos].id);
+        else
+            QMessageBox::warning(this,"Chyba!","Nelze zapisovat do databáze!",QMessageBox::Ok);
     }
 }
