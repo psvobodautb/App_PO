@@ -22,7 +22,8 @@ public:
 
     QList<EmployeeModel>* GetEmployees(){ return &employees; }
     void LoadDb(QSqlQuery* query);
-
+signals:
+    void EmployeesChanged();
     // DB
 private:
     void LoadEmployeesFromDb();

@@ -25,6 +25,7 @@ set(SOURCE_LIST
     src/widgets/groupswidget.cpp
     src/widgets/labelswidget.cpp
     src/widgets/connectingwidget.cpp
+    src/widgets/labeldetailwidget.cpp
 
     include/mainwindow.h
     include/functions.h
@@ -33,6 +34,7 @@ set(SOURCE_LIST
     include/widgets/groupswidget.h
     include/widgets/labelswidget.h
     include/widgets/connectingwidget.h
+    include/widgets/labeldetailwidget.h
 
     src/models/employeemodel.cpp
     src/models/groupmodel.cpp

@@ -24,7 +24,12 @@ public:
 
     QList<GroupModel>* GetGroups(){ return &groups; }
     void LoadDb(QSqlQuery* query);
+    void ReloadConnectingWidget();
 
+signals:
+    void GenerateLabels(QUuid groupId, QUuid subjectId);
+    void GroupSizeChanged(QUuid groupId);
+    void ReloadLabels();
     // DB
 private:
     void LoadGroupsFromDb();
@@ -45,7 +50,7 @@ private:
     int ValidateStudyType(int);
     bool ValidateSemester(int);
 
-    void ValueChanged(const QString&);
+    void Edited();
 
     void AddSubjects();
 

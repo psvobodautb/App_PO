@@ -28,6 +28,8 @@ void ConnectingWidget::ShowWidget(QUuid groupId)
     _query->prepare("Select id, name from Subjects");
     _query->exec();
 
+    blockSignals(true);
+
     while(_query->next()){
         QUuid id = _query->value("id").toUuid();
         QString name = _query->value("name").toString();
@@ -38,10 +40,8 @@ void ConnectingWidget::ShowWidget(QUuid groupId)
     }
 
     _query->prepare("Select * from Connections where groupId=:groupId");
-    _query->bindValue(0,ConvertUuidToString(groupId));
+    _query->bindValue(0,ConvertUuidToString(_groupId));
     _query->exec();
-
-    blockSignals(true);
 
     while(_query->next()){
         for(int i = 0; i < count();i++){
@@ -51,7 +51,12 @@ void ConnectingWidget::ShowWidget(QUuid groupId)
         }
     }
 
-     blockSignals(false);
+    blockSignals(false);
+}
+
+void ConnectingWidget::ReloadWidget()
+{
+    ShowWidget(_groupId);
 }
 
 void ConnectingWidget::OnItemChange(QListWidgetItem *item)
@@ -60,9 +65,12 @@ void ConnectingWidget::OnItemChange(QListWidgetItem *item)
 
     if(item->checkState() == Qt::Checked){
          AddConnectionToDb(subjectId);
+         emit GenerateLabels(_groupId,subjectId);
     }
     else{
         RemoveConnectionFromDb(subjectId);
+        DeleteAndMarkLabelsAsInvalid(subjectId);
+        emit ReloadLabels();
     }
 }
 
@@ -79,5 +87,16 @@ void ConnectingWidget::AddConnectionToDb(QUuid subjectId)
     _query->prepare("Insert into Connections Values(:groupId,:subjectId)");
     _query->bindValue(0,ConvertUuidToString(_groupId));
     _query->bindValue(1,ConvertUuidToString(subjectId));
+    _query->exec();
+}
+
+void ConnectingWidget::DeleteAndMarkLabelsAsInvalid(QUuid subjectId)
+{
+    _query->prepare("DELETE FROM Labels WHERE subjectId=:subjectId AND employeeId IS NULL");
+    _query->bindValue(0, ConvertUuidToString(subjectId));
+    _query->exec();
+
+    _query->prepare("UPDATE Labels SET isValid=false WHERE subjectId=:subjectId");
+    _query->bindValue(0,ConvertUuidToString(subjectId));
     _query->exec();
 }

@@ -21,6 +21,4 @@ public:
     bool isWinterSemester;
 	int studentsNum;
 	int studyForm;
-
-	QList<QUuid> subjects;
 };

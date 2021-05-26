@@ -252,6 +252,8 @@ void EmployeesWidget::AddEmployee()
     }
 
     SetupEmployeesLayout();
+
+    emit EmployeesChanged();
 }
 
 void EmployeesWidget::DeleteEmployee()
@@ -265,6 +267,8 @@ void EmployeesWidget::DeleteEmployee()
     employees.removeAt(btn->property("row").toInt());
 
     SetupEmployeesLayout();
+
+    emit EmployeesChanged();
 }
 
 bool EmployeesWidget::ValidateEmployee()

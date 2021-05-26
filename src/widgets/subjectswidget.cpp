@@ -112,6 +112,16 @@ void SubjectsWidget::DeleteSubjectFromDb(QUuid id)
         _query->prepare("DELETE FROM Connections WHERE subjectId=:subjectId");
         _query->bindValue(0, ConvertUuidToString(id));
         _query->exec();
+
+        _query->prepare("DELETE FROM Labels WHERE subjectId=:subjectId AND employeeId IS NULL");
+        _query->bindValue(0, ConvertUuidToString(id));
+        _query->exec();
+
+        _query->prepare("UPDATE Labels SET isValid=:isValid WHERE subjectId=:subjectId");
+        _query->bindValue(0,false);
+        _query->exec();
+
+        emit Updated();
     }
 }
 
@@ -169,6 +179,7 @@ void SubjectsWidget::SetupAddingLayout()
     weeksNum = new QSpinBox;
     weeksNum->setMinimum(1);
     weeksNum->setMaximum(20);
+    weeksNum->setValue(14);
     lrow->addWidget(weeksNum, Qt::AlignLeft | Qt::AlignTop);
 
     language = new QComboBox;
@@ -206,9 +217,9 @@ void SubjectsWidget::SetupAddingLayout()
     ending->addItem("Zkouška", LabelType::Exam);
     lrow->addWidget(ending, Qt::AlignLeft | Qt::AlignTop);
 
-    groupSize = new QLineEdit;
-    groupSize->setValidator(new QIntValidator(1,1000));
-    groupSize->setText(QString("%1").arg(1));
+    groupSize = new QComboBox;
+    groupSize->addItem("12",12);
+    groupSize->addItem("24",24);
     lrow->addWidget(groupSize, Qt::AlignLeft | Qt::AlignTop);
 
     creditsNum = new QSpinBox;
@@ -313,12 +324,18 @@ void SubjectsWidget::SetupSubjects()
         }
         lrow->addWidget(new QLabel(endingStr));
 
-        QLineEdit* groupSize = new QLineEdit();
+        QComboBox* groupSize = new QComboBox();
+        groupSize->addItem("12",12);
+        groupSize->addItem("24",24);
+
+        if(subjects.at(i).groupSize == 12)
+            groupSize->setCurrentIndex(0);
+        else
+            groupSize->setCurrentIndex(1);
+
         groupSize->setFixedWidth(120);
-        groupSize->setText(QString("%1").arg(subjects.at(i).groupSize));
-        groupSize->setValidator(new QIntValidator(1,1000));
         groupSize->setProperty(GROUP_SIZE,QVariant(i));
-        connect(groupSize, &QLineEdit::textChanged, this, &SubjectsWidget::ValueChanged);
+        connect(groupSize, &QComboBox::currentIndexChanged, this, &SubjectsWidget::Edited);
         lrow->addWidget(groupSize);
 
         lrow->addWidget(new QLabel(QString::number(subjects.at(i).credits)));
@@ -381,7 +398,7 @@ void SubjectsWidget::AddSubject()
         m.studyYear = studyYear->currentIndex();
         m.isWinterSemester = ValidateSemester(semester->currentIndex());
         m.ending = semester->currentIndex();
-        m.groupSize = groupSize->text().toInt();
+        m.groupSize = groupSize->currentData().toInt();
         m.credits = creditsNum->value();
 
         subjects.append(m);
@@ -389,6 +406,8 @@ void SubjectsWidget::AddSubject()
         SetupSubjectsLayout();
 
         InsertSubjectToDb(m);
+
+        emit Updated();
     }
 }
 
@@ -445,19 +464,21 @@ bool SubjectsWidget::ValidateSemester(int s)
     return false;
 }
 
-void SubjectsWidget::ValueChanged(const QString& text)
+void SubjectsWidget::Edited()
 {
-    QLineEdit* sender = qobject_cast<QLineEdit*>(QObject::sender());
+    QComboBox* sender = qobject_cast<QComboBox*>(QObject::sender());
 
     if(sender != nullptr){
         int position = sender->property(GROUP_SIZE).toInt();
-        subjects[position].groupSize = text.toInt();
+        subjects[position].groupSize = sender->currentData().toInt();
 
         if(_query != nullptr){
             _query->prepare("UPDATE Subjects SET groupSize=:groupSize WHERE id=:id");
-            _query->bindValue(0,text.toInt());
+            _query->bindValue(0,sender->currentData().toInt());
             _query->bindValue(1,ConvertUuidToString(subjects[position].id));
             _query->exec();
         }
+
+        emit SubjectSizeChanged(subjects[position].id);
     }
 }

@@ -10,7 +10,7 @@
 const char * NUM_PROPERTY = "num";
 
 GroupsWidget::GroupsWidget(QWidget* parent) :
-    QWidget(parent), _query(nullptr)
+    QWidget(parent), _query(nullptr), connectingWidget(nullptr)
 {
     widgetLayout = new QVBoxLayout();
     scrollArea = new QScrollArea();
@@ -43,9 +43,16 @@ void GroupsWidget::LoadDb(QSqlQuery *query)
         _query = query;
 
         connectingWidget = new ConnectingWidget(_query);
-
+        connect(connectingWidget, &ConnectingWidget::GenerateLabels, this, &GroupsWidget::GenerateLabels);
+        connect(connectingWidget, &ConnectingWidget::ReloadLabels, this, &GroupsWidget::ReloadLabels);
         LoadGroupsFromDb();
     }
+}
+
+void GroupsWidget::ReloadConnectingWidget()
+{
+    if(connectingWidget->isVisible())
+        connectingWidget->ReloadWidget();
 }
 
 void GroupsWidget::LoadGroupsFromDb()
@@ -230,7 +237,8 @@ void GroupsWidget::SetupGroups()
         studentsNumEdit->setText(QString("%1").arg(groups.at(i).studentsNum));
         studentsNumEdit->setValidator(new QIntValidator(1,1000));
         studentsNumEdit->setProperty(NUM_PROPERTY,QVariant(i));
-        connect(studentsNumEdit, &QLineEdit::textChanged, this, &GroupsWidget::ValueChanged);
+        //connect(studentsNumEdit, &QLineEdit::textChanged, this, &GroupsWidget::ValueChanged);
+        connect(studentsNumEdit, &QLineEdit::editingFinished, this, &GroupsWidget::Edited);
         lrow->addWidget(studentsNumEdit);
 
         QPushButton* addSubjectsBtn = new QPushButton("Propojit s předměty");
@@ -349,20 +357,22 @@ bool GroupsWidget::ValidateSemester(int s)
     return false;
 }
 
-void GroupsWidget::ValueChanged(const QString& text)
+void GroupsWidget::Edited()
 {
     QLineEdit* sender = qobject_cast<QLineEdit*>(QObject::sender());
 
     if(sender != nullptr){
         int position = sender->property(NUM_PROPERTY).toInt();
-        groups[position].studentsNum = text.toInt();
+        groups[position].studentsNum = sender->text().toInt();
 
         if(_query != nullptr){
             _query->prepare("UPDATE Groups SET studentsNum=:studentsNum WHERE id=:id");
-            _query->bindValue(0,text.toInt());
+            _query->bindValue(0,sender->text().toInt());
             _query->bindValue(1,ConvertUuidToString(groups[position].id));
             _query->exec();
         }
+
+        emit GroupSizeChanged(groups[position].id);
     }
 }
 
@@ -372,6 +382,8 @@ void GroupsWidget::AddSubjects()
 
     if(sender != nullptr){
         int pos = sender->property("row").toInt();
+
+        qDebug() << pos;
 
         if(_query != nullptr)
             connectingWidget->ShowWidget(groups[pos].id);

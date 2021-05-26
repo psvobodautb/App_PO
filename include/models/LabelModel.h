@@ -14,15 +14,19 @@ public:
     void assign(const LabelModel);
     void operator=(const LabelModel);
 
+    QUuid id;
     QString name;
     QUuid subjectId;
     QUuid employeeId;
+    QUuid groupId;
 
     LabelType labelType;
     int studentsNum;
     int lessonsNum;
     int weeksNum;
     Language language;
-    int points;
+    double points;
+
+    bool isValid;
 };
 

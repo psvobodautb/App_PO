@@ -24,6 +24,9 @@ public:
 
     void LoadDb(QSqlQuery* query);
 
+signals:
+    void SubjectSizeChanged(QUuid subjectId);
+    void Updated();
     // DB
 private:
     void LoadSubjectsFromDb();
@@ -45,6 +48,7 @@ private:
     bool ValidateSemester(int);
 
     void ValueChanged(const QString& text);
+    void Edited();
 
     QVBoxLayout* addingLayout;
     QVBoxLayout* widgetLayout;
@@ -66,7 +70,7 @@ private:
     QComboBox* semester;
     QComboBox* studyForm;
     QComboBox* ending;
-    QLineEdit* groupSize;
+    QComboBox* groupSize;
     QSpinBox* creditsNum;
     QPushButton* btnAdd;
 

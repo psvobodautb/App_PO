@@ -27,6 +27,13 @@ MainWindow::MainWindow(QWidget *parent)
     subjects = new SubjectsWidget();
     groups = new GroupsWidget();
     labels = new LabelsWidget(employees->GetEmployees(),subjects->GetSubjects(),groups->GetGroups(), &query);
+    connect(groups, &GroupsWidget::GenerateLabels, labels, &LabelsWidget::GenerateLabelsSlot);
+    connect(groups, &GroupsWidget::GroupSizeChanged, labels, &LabelsWidget::GroupSizeChangedSlot);
+    connect(subjects, &SubjectsWidget::SubjectSizeChanged, labels, &LabelsWidget::SubjectSizeChangedSlot);
+    connect(subjects, &SubjectsWidget::Updated, labels, &LabelsWidget::LoadCurrentSubjectLabels);
+    connect(subjects, &SubjectsWidget::Updated, groups, &GroupsWidget::ReloadConnectingWidget);
+    connect(employees, &EmployeesWidget::EmployeesChanged, labels, &LabelsWidget::UpdateDetail);
+    connect(groups, &GroupsWidget::ReloadLabels, labels, &LabelsWidget::LoadCurrentSubjectLabels);
 
     tabWidget->addTab(subjects,"Předměty");
     tabWidget->addTab(employees,"Zaměstnanci");
@@ -35,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(tabWidget, &QTabWidget::tabBarClicked, [this](){
         labels->SetupWidget();
+        labels->LoadCurrentSubjectLabels();
     });
 
     if(db.isOpen()){
@@ -49,6 +57,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    delete subjects;
+    delete employees;
+    delete groups;
+    delete labels;
     delete tabWidget;
 }
-

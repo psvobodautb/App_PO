@@ -10,6 +10,7 @@ GroupModel::~GroupModel()
 
 void GroupModel::assign(const GroupModel m)
 {
+    id = m.id;
 	shortcut = m.shortcut;
 	name = m.name;
 	isCombined = m.isCombined;
