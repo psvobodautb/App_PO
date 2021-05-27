@@ -1,6 +1,7 @@
 #pragma once
 
 #include "include/models/EmployeeModel.h"
+#include "include/Enums.h"
 
 #include <QWidget>
 #include <QVBoxLayout>
@@ -11,6 +12,8 @@
 #include <QSpinBox>
 #include <QLineEdit>
 #include <QSqlQuery>
+#include <QUuid>
+#include <QString>
 
 class EmployeesWidget : public QWidget
 {
@@ -22,11 +25,11 @@ public:
 
     QList<EmployeeModel>* GetEmployees(){ return &employees; }
     void LoadDb(QSqlQuery* query);
+    void LoadEmployeesFromDb();
 signals:
     void EmployeesChanged();
     // DB
 private:
-    void LoadEmployeesFromDb();
     void InsertEmployeeToDb(EmployeeModel model);
     void DeleteEmployeeFromDb(QUuid id);
 private:
@@ -41,8 +44,8 @@ private:
     bool ValidateEmployee();
 
     bool ValidateIsDoctoral();
-    //bool ValidateEmail(QString email);
-    //bool ValidatePhoneNumber(QString number);
+
+    QString CalculatePoints(QUuid employeeId, Language);
 
     QVBoxLayout* widgetLayout;
     QVBoxLayout* addingLayout;
@@ -53,13 +56,11 @@ private:
 
     QLineEdit* name;
     QLineEdit* surname;
-    QLineEdit* phoneNumHome;
-    QLineEdit* phoneNumWork;
     QLineEdit* emailWork;
     QLineEdit* emailHome;
     QLineEdit* office;
     QComboBox* isDoctoral;
-    QDoubleSpinBox* harnessType; // typ �vazku
+    QDoubleSpinBox* harnessType;
     QPushButton* btnAdd;
 
     QList<EmployeeModel> employees;

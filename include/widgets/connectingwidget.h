@@ -12,7 +12,7 @@ public:
     explicit ConnectingWidget(QSqlQuery *query, QWidget *parent = nullptr);
 
     void ShowWidget(QUuid groupId);
-    void ReloadWidget();
+    void LoadConnections();
 
 signals:
     void GenerateLabels(QUuid groupId,QUuid subjectId);

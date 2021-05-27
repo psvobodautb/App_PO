@@ -40,6 +40,7 @@ public:
 
 signals:
     void UpdateDetail();
+    void EmployeeChanged();
 
 private:
     void ClearGroupBox();

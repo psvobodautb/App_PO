@@ -4,6 +4,7 @@
 #include <QMessageBox>
 //#include <QRegExp>
 #include <QDebug>
+#include <QSqlError>
 
 #include "include/Functions.h"
 
@@ -37,7 +38,8 @@ EmployeesWidget::~EmployeesWidget()
 
 void EmployeesWidget::LoadDb(QSqlQuery *query)
 {
-    if(query != nullptr){
+    if(query != nullptr)
+    {
         _query = query;
         LoadEmployeesFromDb();
     }
@@ -45,25 +47,29 @@ void EmployeesWidget::LoadDb(QSqlQuery *query)
 
 void EmployeesWidget::LoadEmployeesFromDb()
 {
-    _query->exec("Select * from employees");
+    if(_query != nullptr){
+        employees.clear();
 
-    while(_query->next()){
-        EmployeeModel model;
+        _query->prepare("Select * from Employees");
+        _query->exec();
 
-        model.id = _query->value("id").toUuid();
-        model.name = _query->value("name").toString();
-        model.surname = _query->value("surname").toString();
-        model.phoneNumHome = _query->value("phoneNumHome").toString();
-        model.phoneNumWork = _query->value("phoneNumWork").toString();
-        model.emailWork = _query->value("emailWork").toString();
-        model.emailHome = _query->value("emailHome").toString();
-        model.office = _query->value("office").toString();
-        model.isDoctoral = _query->value("isDoctoral").toBool();
-        model.harnessType = _query->value("harnessType").toDouble();
-        model.workPointsNum = _query->value("workPointsNum").toInt();
+        while(_query->next()){
+            EmployeeModel m;
 
-        employees.append(model);
-        SetupEmployees();
+            m.id = _query->value("id").toUuid();
+            m.name = _query->value("name").toString();
+            m.surname = _query->value("surname").toString();
+            m.emailWork = _query->value("emailWork").toString();
+            m.emailHome = _query->value("emailHome").toString();
+            m.office = _query->value("office").toString();
+            m.isDoctoral = _query->value("isDoctoral").toBool();
+            m.harnessType = _query->value("harnessType").toDouble();
+            m.workPointsNum = _query->value("workPointsNum").toInt();
+
+            employees.append(m);
+        }
+
+        SetupEmployeesLayout();
     }
 }
 
@@ -71,19 +77,17 @@ void EmployeesWidget::InsertEmployeeToDb(EmployeeModel model)
 {
     if(_query != nullptr){
 
-        _query->prepare("INSERT INTO Employees VALUES(:id, :name, :surname, :phoneNumHome, :phoneNumWork, :emailWork, :emailHome,"
+        _query->prepare("INSERT INTO Employees VALUES(:id, :name, :surname, :emailWork, :emailHome,"
         " :office, :isDoctoral, :harnessType, :workPointsNum)");
         _query->bindValue(0, ConvertUuidToString(model.id));
         _query->bindValue(1, model.name);
         _query->bindValue(2, model.surname);
-        _query->bindValue(3, model.phoneNumHome);
-        _query->bindValue(4, model.phoneNumWork);
-        _query->bindValue(5, model.emailWork);
-        _query->bindValue(6, model.emailHome);
-        _query->bindValue(7, model.office);
-        _query->bindValue(8, model.isDoctoral);
-        _query->bindValue(9, model.harnessType);
-        _query->bindValue(10, 0);
+        _query->bindValue(3, model.emailWork);
+        _query->bindValue(4, model.emailHome);
+        _query->bindValue(5, model.office);
+        _query->bindValue(6, model.isDoctoral);
+        _query->bindValue(7, model.harnessType);
+        _query->bindValue(8, 0);
 
         _query->exec();
     }
@@ -93,6 +97,10 @@ void EmployeesWidget::DeleteEmployeeFromDb(QUuid id)
 {
     if(_query != nullptr){
         _query->prepare("DELETE FROM Employees WHERE id=:id");
+        _query->bindValue(0, ConvertUuidToString(id));
+        _query->exec();
+
+        _query->prepare("UPDATE Labels SET employeeId = NULL WHERE employeeId=:employeeId");
         _query->bindValue(0, ConvertUuidToString(id));
         _query->exec();
     }
@@ -105,8 +113,6 @@ void EmployeesWidget::SetupAddingLayout()
     QHBoxLayout* lrow = new QHBoxLayout();
     lrow->addWidget(new QLabel("Jméno"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Příjmení"), Qt::AlignCenter);
-    lrow->addWidget(new QLabel("Telefon"), Qt::AlignCenter);
-    lrow->addWidget(new QLabel("Telefon do práce"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Osobní email"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Pracovní email"), Qt::AlignCenter);
     lrow->addWidget(new QLabel("Kancelář"), Qt::AlignCenter);
@@ -122,12 +128,6 @@ void EmployeesWidget::SetupAddingLayout()
 
     surname = new QLineEdit;
     lrow->addWidget(surname, Qt::AlignLeft | Qt::AlignTop);
-
-    phoneNumHome = new QLineEdit;
-    lrow->addWidget(phoneNumHome, Qt::AlignLeft | Qt::AlignTop);
-
-    phoneNumWork = new QLineEdit;
-    lrow->addWidget(phoneNumWork, Qt::AlignLeft | Qt::AlignTop);
 
     emailHome = new QLineEdit;
     lrow->addWidget(emailHome, Qt::AlignLeft | Qt::AlignTop);
@@ -147,9 +147,19 @@ void EmployeesWidget::SetupAddingLayout()
     harnessType->setMinimum(0.);
     harnessType->setMaximum(1.);
     harnessType->setSingleStep(0.1);
+    harnessType->setValue(1.);
     lrow->addWidget(harnessType, Qt::AlignLeft | Qt::AlignTop);
 
+    QLabel* en = new QLabel("Body EN");
+    en->setFixedWidth(100);
+    lrow->addWidget(en);
+
+    QLabel* cz = new QLabel("Body CZ");
+    cz->setFixedWidth(100);
+    lrow->addWidget(cz);
+
     btnAdd = new QPushButton("Přidat");
+    btnAdd->setFixedWidth(100);
     lrow->addWidget(btnAdd, Qt::AlignLeft | Qt::AlignTop);
     connect(btnAdd, &QPushButton::released, this, &EmployeesWidget::AddEmployee);
 
@@ -171,8 +181,6 @@ void EmployeesWidget::SetupEmployees()
 
         lrow->addWidget(new QLabel(employees.at(i).name));
         lrow->addWidget(new QLabel(employees.at(i).surname));
-        lrow->addWidget(new QLabel(employees.at(i).phoneNumHome));
-        lrow->addWidget(new QLabel(employees.at(i).phoneNumWork));
         lrow->addWidget(new QLabel(employees.at(i).emailHome));
         lrow->addWidget(new QLabel(employees.at(i).emailWork));
         lrow->addWidget(new QLabel(employees.at(i).office));
@@ -184,7 +192,18 @@ void EmployeesWidget::SetupEmployees()
 
         lrow->addWidget(new QLabel(QString::number(employees.at(i).harnessType, 'f', 1)));
 
+        QLabel* pointsEN = new QLabel();
+        pointsEN->setFixedWidth(100);
+        pointsEN->setText(CalculatePoints(employees.at(i).id,Language::English));
+        lrow->addWidget(pointsEN);
+
+        QLabel* pointsCZ = new QLabel();
+        pointsCZ->setFixedWidth(100);
+        pointsCZ->setText(CalculatePoints(employees.at(i).id,Language::Czech));
+        lrow->addWidget(pointsCZ);
+
         QPushButton* deleteBtn = new QPushButton("Smazat");
+        deleteBtn->setFixedWidth(100);
         deleteBtn->setProperty("row", i);
 
         lrow->addWidget(deleteBtn);
@@ -204,6 +223,7 @@ void EmployeesWidget::SetupEmployeesLayout()
     ClearEmployeesLayout();
     SetupEmployees();
 }
+
 
 void EmployeesWidget::ClearEmployeesLayout()
 {
@@ -238,8 +258,6 @@ void EmployeesWidget::AddEmployee()
         m.id = QUuid::createUuid();
         m.name = name->text();
         m.surname = surname->text();
-        m.phoneNumHome = phoneNumHome->text();
-        m.phoneNumWork = phoneNumWork->text();
         m.emailWork = emailWork->text();
         m.emailHome = emailHome->text();
         m.office = office->text();
@@ -284,12 +302,6 @@ bool EmployeesWidget::ValidateEmployee()
     if (office->text().isEmpty())
         isValid = false;
 
-    /*if (!ValidatePhoneNumber(phoneNumHome->text()))
-        isValid = false;
-
-    if (!ValidatePhoneNumber(phoneNumWork->text()))
-        isValid = false;*/
-
     return isValid;
 }
 
@@ -301,20 +313,28 @@ bool EmployeesWidget::ValidateIsDoctoral()
     return true;
 }
 
-//bool EmployeesWidget::ValidateEmail(QString email)
-//{
-//    qDebug() << email;
-//    QRegExp mailREX("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b");
-//    mailREX.setCaseSensitivity(Qt::CaseInsensitive);
-//    mailREX.setPatternSyntax(QRegExp::RegExp);
-//    return mailREX.exactMatch(email);
-//}
-//
-//bool EmployeesWidget::ValidatePhoneNumber(QString number)
-//{
-//    qDebug() << number;
-//    QRegExp mailREX("^+[1-9]{1}[0-9]{3,14}$");
-//    mailREX.setCaseSensitivity(Qt::CaseInsensitive);
-//    mailREX.setPatternSyntax(QRegExp::RegExp);
-//    return mailREX.exactMatch(number);
-//}
+QString EmployeesWidget::CalculatePoints(QUuid employeeId, Language lan)
+{
+    _query->prepare("SELECT lessonsNum, weeksNum, language, points, isValid FROM Labels WHERE employeeId=:employeeId");
+    _query->bindValue(0,ConvertUuidToString(employeeId));
+    _query->exec();
+
+    double points = 0;
+
+    while(_query->next()){
+
+        Language labelLan = Language(_query->value("language").toInt());
+        bool isValid = _query->value("isValid").toBool();
+
+        if(lan == labelLan && isValid)
+        {
+            double lessons =  _query->value("lessonsNum").toDouble();
+            double weeks = _query->value("weeksNum").toDouble();
+            double labelPoints = _query->value("points").toDouble();
+
+            double sum = lessons * weeks * labelPoints;
+            points += sum;
+        }
+    }
+    return QString::number(points, 'f', 2);
+}

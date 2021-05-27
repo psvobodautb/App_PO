@@ -52,7 +52,7 @@ void GroupsWidget::LoadDb(QSqlQuery *query)
 void GroupsWidget::ReloadConnectingWidget()
 {
     if(connectingWidget->isVisible())
-        connectingWidget->ReloadWidget();
+        connectingWidget->LoadConnections();
 }
 
 void GroupsWidget::LoadGroupsFromDb()
@@ -102,6 +102,14 @@ void GroupsWidget::DeleteGroupFromDb(QUuid id)
         _query->exec();
 
         _query->prepare("SELETE FROM Connections WHERE groupId=:id");
+        _query->bindValue(0, ConvertUuidToString(id));
+        _query->exec();
+
+        _query->prepare("DELETE FROM Labels WHERE groupId=:groupId AND employeeId IS NULL");
+        _query->bindValue(0, ConvertUuidToString(id));
+        _query->exec();
+
+        _query->prepare("UPDATE Labels SET isValid=false WHERE groupId=:groupId");
         _query->bindValue(0, ConvertUuidToString(id));
         _query->exec();
     }

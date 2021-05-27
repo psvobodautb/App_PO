@@ -50,6 +50,8 @@ void SubjectsWidget::LoadDb(QSqlQuery* query)
 
 void SubjectsWidget::LoadSubjectsFromDb()
 {
+    subjects.clear();
+
     _query->exec("Select * from Subjects");
 
     while(_query->next()){
@@ -113,12 +115,8 @@ void SubjectsWidget::DeleteSubjectFromDb(QUuid id)
         _query->bindValue(0, ConvertUuidToString(id));
         _query->exec();
 
-        _query->prepare("DELETE FROM Labels WHERE subjectId=:subjectId AND employeeId IS NULL");
+        _query->prepare("DELETE FROM Labels WHERE subjectId=:subjectId");
         _query->bindValue(0, ConvertUuidToString(id));
-        _query->exec();
-
-        _query->prepare("UPDATE Labels SET isValid=:isValid WHERE subjectId=:subjectId");
-        _query->bindValue(0,false);
         _query->exec();
 
         emit Updated();

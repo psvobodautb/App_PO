@@ -13,8 +13,6 @@ void EmployeeModel::assign(const EmployeeModel m )
 	id = m.id;
 	name = m.name;
 	surname = m.surname;
-	phoneNumHome = m.phoneNumHome;
-	phoneNumWork = m.phoneNumWork;
 	emailWork = m.emailWork;
 	emailHome = m.emailHome;
 	office = m.office;

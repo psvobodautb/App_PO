@@ -83,6 +83,10 @@ void LabelsWidget::SetupWidget()
 
     if(subjects->count() > 0)
         buttonGroup->button(0)->setChecked(true);
+    else{
+        assigned->clear();
+        unassigned->clear();
+    }
 
     QSpacerItem* spacerItem = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
     subjectsLayout->addItem(spacerItem);
@@ -141,8 +145,6 @@ void LabelsWidget::GroupSizeChangedSlot(QUuid groupId)
 
 void LabelsWidget::SubjectSizeChangedSlot(QUuid subjectId)
 {
-    qDebug() << "subject size changed" << subjectId;
-
     SubjectModel subject;
 
     for(int k = 0; k < subjects->count(); k++){
@@ -464,10 +466,6 @@ void LabelsWidget::UpdateLabels(SubjectModel subject, GroupModel group)
                 }
             }
 
-            // update db
-
-            qDebug() << "updating: "<< excercises.count() << seminars.count();
-
             for(int ePos = 0; ePos < excercises.count(); ePos++){
                 if(excercises.at(ePos).isValid || !excercises.at(ePos).employeeId.isNull())
                     InsertExcerciseToDb(excercises.at(ePos));
@@ -595,7 +593,7 @@ LabelModel LabelsWidget::CreateSeminarLabel(SubjectModel subject, GroupModel gro
     label.groupId = group.id;
     label.labelType = LabelType::Seminar;
     label.studentsNum = groupSize;
-    label.lessonsNum = subject.excercisesNum;
+    label.lessonsNum = subject.seminarsNum;
     label.weeksNum = subject.weeksNum;
 
     if(subject.isEnglish){
@@ -648,7 +646,7 @@ void LabelsWidget::InsertLectureToDd(LabelModel lecture)
     _query->bindValue(2, ConvertUuidToString(lecture.subjectId));
 
     if(lecture.employeeId.isNull())
-        _query->bindValue(3, "NULL");
+        _query->bindValue(3, QVariant());
     else
         _query->bindValue(3, ConvertUuidToString(lecture.employeeId));
 
@@ -671,7 +669,7 @@ void LabelsWidget::InsertSeminarToDb(LabelModel seminar)
     _query->bindValue(2, ConvertUuidToString(seminar.subjectId));
 
     if(seminar.employeeId.isNull())
-        _query->bindValue(3, "NULL");
+        _query->bindValue(3, QVariant());
     else
         _query->bindValue(3, ConvertUuidToString(seminar.employeeId));
 
@@ -694,7 +692,7 @@ void LabelsWidget::InsertExcerciseToDb(LabelModel excercise)
     _query->bindValue(2, ConvertUuidToString(excercise.subjectId));
 
     if(excercise.employeeId.isNull())
-        _query->bindValue(3, "NULL");
+        _query->bindValue(3, QVariant());
     else
         _query->bindValue(3, ConvertUuidToString(excercise.employeeId));
 
@@ -712,11 +710,12 @@ void LabelsWidget::InsertExcerciseToDb(LabelModel excercise)
 void LabelsWidget::UpdateEmployee(QString labelId, QString employeeId)
 {
     _query->prepare("UPDATE Labels SET employeeId=:employeeId WHERE id=:id");
-    _query->bindValue(0,employeeId);
-    _query->bindValue(1,labelId);
+    _query->bindValue(0, employeeId);
+    _query->bindValue(1, labelId);
     _query->exec();
 
     LoadCurrentSubjectLabels();
+    emit EmployeeChanged();
 }
 
 void LabelsWidget::LabelClicked(QListWidgetItem *item)

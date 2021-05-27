@@ -18,12 +18,17 @@ ConnectingWidget::ConnectingWidget(QSqlQuery *query,QWidget *parent) : QListWidg
 
 void ConnectingWidget::ShowWidget(QUuid groupId)
 {
-    clear();
-
     show();
     raise();
 
     _groupId = groupId;
+
+    LoadConnections();
+}
+
+void ConnectingWidget::LoadConnections()
+{   
+    clear();
 
     _query->prepare("Select id, name from Subjects");
     _query->exec();
@@ -52,11 +57,6 @@ void ConnectingWidget::ShowWidget(QUuid groupId)
     }
 
     blockSignals(false);
-}
-
-void ConnectingWidget::ReloadWidget()
-{
-    ShowWidget(_groupId);
 }
 
 void ConnectingWidget::OnItemChange(QListWidgetItem *item)

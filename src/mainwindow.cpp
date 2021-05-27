@@ -33,7 +33,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(subjects, &SubjectsWidget::Updated, labels, &LabelsWidget::LoadCurrentSubjectLabels);
     connect(subjects, &SubjectsWidget::Updated, groups, &GroupsWidget::ReloadConnectingWidget);
     connect(employees, &EmployeesWidget::EmployeesChanged, labels, &LabelsWidget::UpdateDetail);
+    connect(employees, &EmployeesWidget::EmployeesChanged, labels, &LabelsWidget::LoadCurrentSubjectLabels);
     connect(groups, &GroupsWidget::ReloadLabels, labels, &LabelsWidget::LoadCurrentSubjectLabels);
+    connect(labels, &LabelsWidget::EmployeeChanged, employees, &EmployeesWidget::LoadEmployeesFromDb);
 
     tabWidget->addTab(subjects,"Předměty");
     tabWidget->addTab(employees,"Zaměstnanci");
@@ -43,6 +45,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(tabWidget, &QTabWidget::tabBarClicked, [this](){
         labels->SetupWidget();
         labels->LoadCurrentSubjectLabels();
+        subjects->LoadDb(&query);
+        employees->LoadEmployeesFromDb();
     });
 
     if(db.isOpen()){
